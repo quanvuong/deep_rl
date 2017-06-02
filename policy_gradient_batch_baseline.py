@@ -173,7 +173,7 @@ def masked_softmax(logits, mask):
     probs = scores / total_scores
     return probs
 
-def run_policy_net(policy_net, state):
+def run_policy_net(policy_net, state, epsilon=0.2):
     '''Wrapper function to feed a given state into the given policy network and
        return an action vector, as well as parameter gradients.
 
@@ -190,8 +190,15 @@ def run_policy_net(policy_net, state):
     action_mask = np.expand_dims(game.filter_joint_actions(state), axis=0)
     dist = masked_softmax(o, action_mask)
 
-    # Sample an available action from dist
-    a_index = torch.multinomial(dist.data,1)[0,0]
+    if np.random.rand() > epsilon:
+        # print('exploring with epsilon')
+        non_zero_index = []
+        for idx, value in enumerate(dist.data[0]):
+            if value != 0:
+                non_zero_index.append(idx)
+        return np.random.choice(non_zero_index)
+
+    a_index = torch.multinomial(dist.data, 1)[0, 0]
 
     return a_index
 

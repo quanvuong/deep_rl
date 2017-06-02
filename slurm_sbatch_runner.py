@@ -1,5 +1,11 @@
 import os
 from subprocess import call
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--do_not_run_generated_files', default=False)
+args = parser.parse_args()
+print(args)
 
 grid_sizes = [(6, 6), (10, 10), (16, 16), (25, 25), (50, 50)]
 
@@ -56,6 +62,9 @@ for grid_size in grid_sizes:
     with open(script_loc, 'w') as f:
         f.write(sbatch_script)
 
-    call(["sbatch", script_loc])
+    if args.do_not_run_generated_files:
+        continue
+    else:
+        call(["sbatch", script_loc])
 
 
