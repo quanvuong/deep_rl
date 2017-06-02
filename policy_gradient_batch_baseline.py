@@ -262,8 +262,8 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs multi-agent policy gradient.')
     parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
-    parser.add_argument('--hunter', default=0, type=int)
-    parser.add_argument('--rabbit', default=0, type=int)
+    parser.add_argument('--hunter', default=1, type=int)
+    parser.add_argument('--rabbit', default=1, type=int)
     parser.add_argument('--print_time_step', default=None, type=int)
     parser.add_argument('--grid_size', default=6, type=int)
     parser.add_argument('--max_episode_len', default=float('inf'), type=float, help='Terminate episode early at this number of steps')
