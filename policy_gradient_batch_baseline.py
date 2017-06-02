@@ -59,7 +59,7 @@ def run_episode(policy_net, gamma=1.0):
             episode[-1].r += max_len_penalty
             break
 
-        if len(episode) % 500 == 0:
+        if print_time_step and len(episode) % print_time_step == 0:
             print('Current at timestep {} of episode'.format(len(episode)))
 
     # We have the reward from each (state, action), now calculate the return
@@ -264,6 +264,7 @@ if __name__ == '__main__':
     parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
     parser.add_argument('--hunter', default=0, type=int)
     parser.add_argument('--rabbit', default=0, type=int)
+    parser.add_argument('--print_time_step', default=None, type=int)
     parser.add_argument('--grid_size', default=6, type=int)
     parser.add_argument('--max_episode_len', default=float('inf'), type=float, help='Terminate episode early at this number of steps')
     parser.add_argument('--max_len_penalty', default=0, type=float, help='If episode is terminated early, add this to the last reward')
@@ -278,6 +279,8 @@ if __name__ == '__main__':
     if args.game != 'hunters' and (args.hunter or args.rabbit):
         print('Number of hunters or rabbits can only be specified if the game is hunters')
         sys.exit(1)
+
+    print_time_step = args.print_time_step
 
     # Sets options for PG
     max_episode_len = args.max_episode_len
