@@ -298,7 +298,7 @@ if __name__ == '__main__':
     elif args.game == 'hunters':
         # Note: Not sure how many hidden layers to give the policy net
         import hunters as game
-        k, m = 2, 2
+        k, m = 1, 1
         if k == 1 or k == 2:
             policy_net_layers = [3*(k+m), 128, 9**k]
         elif k == 3:
