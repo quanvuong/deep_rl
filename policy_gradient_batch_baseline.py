@@ -322,6 +322,7 @@ if __name__ == '__main__':
             policy_net_layers = [3*(k+m), 512, 9**k]
         value_net_layers = [3*(k+m), 64, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
+                          'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': grid_size})
 
     for i in range(args.num_rounds):
