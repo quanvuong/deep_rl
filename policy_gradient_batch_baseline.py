@@ -16,6 +16,7 @@ import os
 import random
 import sys
 import torch
+from collections import OrderedDict
 
 from namedlist import namedlist
 from torch.autograd import Variable
@@ -73,10 +74,17 @@ def build_value_net(layers):
     '''Builds an MLP value function approximator, which maps states to scalar
        values. It has one hidden layer with tanh activations.
     '''
-    value_net = torch.nn.Sequential(
-                  torch.nn.Linear(layers[0], layers[1]),
-                  torch.nn.Tanh(),
-                  torch.nn.Linear(layers[1], layers[2]))
+    container = OrderedDict()
+    container['linear1'] = torch.nn.Linear(layers[0], layers[1])
+    container['tanh1'] = torch.nn.Tanh()
+    container['linear2'] = torch.nn.Linear(layers[1], layers[2])
+
+    if len(layers) > 3:
+        # Assume layers have 1 more layers here
+        container['tanh2'] = torch.nn.Tanh()
+        container['linear3'] = torch.nn.Linear(layers[2], layers[3])
+
+    value_net = torch.nn.Sequential(container)
     value_net.layers = layers
 
     return value_net.cuda() if cuda else value_net
@@ -222,7 +230,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0,
     values = Variable(FloatTensor(np.asarray(values)))
 
     # Prepare for one forward pass, with the batch containing the entire episode
-    a_size = policy_net.layers[2]
+    a_size = policy_net.layers[-1]
     s_size = len(episode[0].s)
     policy_net.zero_grad()
 
@@ -273,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
     parser.add_argument('--gamma', default=1, type=float, help='Global discount factor for Monte-Carlo and TD returns')
     parser.add_argument('--save_policy', type=str, help='Save the trained policy under this filename')
+    parser.add_argument('--hidden_layers', nargs='+', type=int, help='Specify the hidden layers of the policy net')
     args = parser.parse_args()
     print(args)
 
@@ -320,7 +329,9 @@ if __name__ == '__main__':
             policy_net_layers = [3*(k+m), 256, 9**k]
         elif k == 4:
             policy_net_layers = [3*(k+m), 512, 9**k]
-        value_net_layers = [3*(k+m), 64, 1]
+        else:
+            policy_net_layers = [3*(k+m)] + args.hidden_layers + [9**k]
+        value_net_layers = [3*(k+m)] + [64 for i in range(len(args.hidden_layers))] + [1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': grid_size})
