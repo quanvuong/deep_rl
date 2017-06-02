@@ -60,7 +60,7 @@ def run_episode(policy_net, gamma=1.0):
             break
 
         if print_time_step and len(episode) % print_time_step == 0:
-            print('Current at timestep {} of episode'.format(len(episode)))
+            print('Current at timestep {} of episode {}'.format(len(episode), num_episode))
 
     # We have the reward from each (state, action), now calculate the return
     for i, step in enumerate(reversed(episode)):
@@ -333,7 +333,8 @@ if __name__ == '__main__':
 
         # RMSProp variables for policy net
         mean_square = [ZeroTensor(W.size()) for W in policy_net.parameters()]
-        for W in mean_square: W += 1
+        for W in mean_square:
+            W += 1
 
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
