@@ -264,6 +264,7 @@ if __name__ == '__main__':
     parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
     parser.add_argument('--hunter', default=0, type=int)
     parser.add_argument('--rabbit', default=0, type=int)
+    parser.add_argument('--grid_size', default=6, type=int)
     parser.add_argument('--max_episode_len', default=float('inf'), type=float, help='Terminate episode early at this number of steps')
     parser.add_argument('--max_len_penalty', default=0, type=float, help='If episode is terminated early, add this to the last reward')
     parser.add_argument('--num_episodes', default=100000, type=int, help='Number of episodes to run in a round of training')
@@ -281,6 +282,7 @@ if __name__ == '__main__':
     # Sets options for PG
     max_episode_len = args.max_episode_len
     max_len_penalty = args.max_len_penalty
+    grid_size = args.grid_size
     cuda = False
     if torch.cuda.is_available():
         print('Cuda is available. Running policy gradient on GPU.')
@@ -318,7 +320,7 @@ if __name__ == '__main__':
         value_net_layers = [3*(k+m), 64, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
-                          'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
+                          'end_when_capture': None, 'k': k, 'm': m, 'n': grid_size})
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
