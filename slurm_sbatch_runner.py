@@ -44,8 +44,9 @@ for hidden_layer in hidden_layers:
         os.mkdir(grid_result_folder)
 
     hl_as_str = ' '.join(str(size) for size in hidden_layer)
+    hl_as_str_in_name = hl_as_str.replace(' ', '_')
 
-    job_name = 'hunters_1h1r_{}x{}_08_{}'.format(grid_x, grid_y, hl_as_str)
+    job_name = 'hunters_1h1r_{}x{}_08_{}'.format(grid_x, grid_y, hl_as_str_in_name)
     sbatch_script = BASE_SBATCH_SCRIPT.format(
         job_name=job_name,
         output='{}{}.o'.format(grid_result_folder, job_name),
