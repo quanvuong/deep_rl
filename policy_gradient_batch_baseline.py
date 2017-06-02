@@ -59,6 +59,9 @@ def run_episode(policy_net, gamma=1.0):
             episode[-1].r += max_len_penalty
             break
 
+        if len(episode) % 500 == 0:
+            print('Current at timestep {} of episode'.format(len(episode)))
+
     # We have the reward from each (state, action), now calculate the return
     for i, step in enumerate(reversed(episode)):
         if i == 0: step.G = step.r
