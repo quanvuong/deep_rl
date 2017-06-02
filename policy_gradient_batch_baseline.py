@@ -27,7 +27,7 @@ from torch.autograd import Variable
 EpisodeStep = namedlist('EpisodeStep', 's a r G', default=0)
 SMALL = 1e-7
 
-def run_episode(policy_net, gamma=1.0):
+def run_episode(policy_net, gamma=1.0, epsilon=0.2):
     '''Runs one episode of Gridworld Cliff to completion with a policy network,
        which is a MLP that maps states to joint action probabilities.
 
@@ -45,7 +45,7 @@ def run_episode(policy_net, gamma=1.0):
     # Run game until agent reaches the end
     while not game.is_end(state):
         # Let our agent decide that to do at this state
-        a = run_policy_net(policy_net, state)
+        a = run_policy_net(policy_net, state, epsilon)
 
         # Take that action, then the game gives us the next state and reward
         next_s, r = game.perform_joint_action(state, a)
@@ -343,9 +343,12 @@ if __name__ == '__main__':
         for W in mean_square:
             W += 1
 
+        epsilons = np.linspace(0, 0.3, args.num_episodes)
+        epsilons = np.flip(epsilons, 0)
+
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
-            episode = run_episode(policy_net, gamma=args.gamma)
+            episode = run_episode(policy_net, gamma=args.gamma, epsilon=epsilons[num_episode])
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
             avg_return = 0.9 * avg_return + 0.1 * episode[0].G
