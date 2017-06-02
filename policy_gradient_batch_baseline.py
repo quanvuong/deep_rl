@@ -272,7 +272,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print(args)
 
-    if args.game != 'hunters' and args.hunter or args.rabbit:
+    if args.game != 'hunters' and (args.hunter or args.rabbit):
         print('Number of hunters or rabbits can only be specified if the game is hunters')
         sys.exit(1)
 
