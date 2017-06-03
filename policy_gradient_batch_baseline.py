@@ -280,7 +280,7 @@ if __name__ == '__main__':
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
     parser.add_argument('--gamma', default=1, type=float, help='Global discount factor for Monte-Carlo and TD returns')
     parser.add_argument('--save_policy', type=str, help='Save the trained policy under this filename')
-    parser.add_argument('--epsilon', type=int)
+    parser.add_argument('--epsilon', type=float)
     args = parser.parse_args()
     print(args)
 
