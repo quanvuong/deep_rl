@@ -149,13 +149,15 @@ def build_policy_net(layers):
         def __init__(self, layers):
             super(PolicyNet, self).__init__()
             self.lstm = torch.nn.LSTMCell(layers[0], layers[1])
-            self.linear = torch.nn.Linear(layers[1], layers[2])
+            self.linear1 = torch.nn.Linear(layers[1], layers[2])
+            self.linear2 = torch.nn.Linear(layers[2], layers[3])
             self.layers = layers
 
         def forward(self, x, h0, c0):
             h1, c1 = self.lstm(x, (h0, c0))
-            o1 = self.linear(h1)
-            return o1, h1, c1
+            o1 = self.linear1(h1)
+            o2 = self.linear2(o1)
+            return o2, h1, c1
 
     policy_net = PolicyNet(layers)
     return policy_net.cuda() if cuda else policy_net
@@ -343,8 +345,8 @@ if __name__ == '__main__':
 
     # Set up Hunters game
     import hunters as game
-    k, m = 5, 5
-    policy_net_layers = [3*(k+m) + 9, 128, 9]
+    k, m = 6, 6
+    policy_net_layers = [3*(k+m) + 9, 128, 128, 9]
     value_net_layers = [3*(k+m), 64, 1]
     game.set_options({'rabbit_action': None, 'remove_hunter': True,
                       'timestep_reward': 0, 'capture_reward': 1,
