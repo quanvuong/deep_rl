@@ -15,11 +15,10 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=40000mb
+#SBATCH --mem=200000mb
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=qhv200@nyu.edu
-#SBATCH --partition=debug
-#SBATCH --gres=gpu:1
+#SBATCH --partition=aquila
 #SBATCH --share
 cd
 cd /gpfsnyu/home/qhv200/deep_rl
