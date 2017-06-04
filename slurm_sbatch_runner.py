@@ -22,7 +22,7 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 #SBATCH --share
 cd
 cd /gpfsnyu/home/qhv200/deep_rl
-source activate pytorch_gpu
+source activate pytorch_cpu
 python policy_gradient_batch_baseline.py --game hunters --rabbit 6 --hunter 6 --grid_size 6 --gamma 0.8 --hidden_layers {hidden_layers} --save_policy {save_policy}"""
 SCRIPT_SUFFIX = '.sbatch_script'
 
