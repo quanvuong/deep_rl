@@ -2,7 +2,7 @@ import os
 from subprocess import call
 
 grid_size = (6, 6)
-hidden_layers = [[128]]
+hidden_layers = [[128], [128, 128]]
 
 HUNTER_FOLDER = 'hunters_results/diff_hidden_layers'
 BASE_SBATCH_SCRIPT = """#!/bin/bash -l
