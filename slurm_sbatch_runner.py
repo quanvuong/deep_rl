@@ -11,8 +11,7 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 #SBATCH --error={error_output}
 
 #SBATCH --time=00
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=16000MB
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=qhv200@nyu.edu
