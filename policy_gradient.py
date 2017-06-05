@@ -318,7 +318,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs multi-agent policy gradient.')
     parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
-    parser.add_argument('--cuda', default=False, action='store_true', help='Include to run on CUDA')
+    parser.add_argument('--no_cuda', default=None, action='store_true', help='Include to run on CUDA')
     parser.add_argument('--max_episode_len', default=float('inf'), type=float, help='Terminate episode early at this number of steps')
     parser.add_argument('--max_len_penalty', default=0, type=float, help='If episode is terminated early, add this to the last reward')
     parser.add_argument('--num_episodes', default=100000, type=int, help='Number of episodes to run in a round of training')
@@ -331,10 +331,13 @@ if __name__ == '__main__':
     print(args)
 
     # Sets options for PG
-    cuda = args.cuda
     max_episode_len = args.max_episode_len
     max_len_penalty = args.max_len_penalty
-    if cuda: print('Running policy gradient on GPU.')
+    if torch.cuda.is_available() and args.no_cuda is None:
+        cuda = True
+        print('Running policy gradient on GPU.')
+    else:
+        cuda = False
 
     # Transparently set number of threads based on environment variables
     num_threads = int(os.getenv('OMP_NUM_THREADS', 1))
