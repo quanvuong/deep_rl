@@ -17,7 +17,6 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 #SBATCH --mail-user=qhv200@nyu.edu
 #SBATCH --partition=debug
 #SBATCH --gres=gpu:1
-#SBATCH --exclusive
 cd
 cd /gpfsnyu/home/qhv200/deep_rl
 source activate pytorch_gpu

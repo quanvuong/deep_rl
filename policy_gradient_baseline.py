@@ -185,6 +185,7 @@ def run_policy_net(policy_net, state):
     a_index = np.random.choice(filt_a, p=dist[0].data.cpu().numpy())
 
     # Calculate log(p + eps); eps for numerical stability
+    # Questions
     filt_a_index = 0 if a_index == 0 else action_mask[:a_index].sum()
     log_p = (dist[0][filt_a_index] + 1e-8).log()
 
