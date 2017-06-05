@@ -62,8 +62,11 @@ def run_episode(policy_net, gamma=1.0):
 
     # We have the reward from each (state, action), now calculate the return
     for i, step in enumerate(reversed(episode)):
-        if i == 0: step.G = step.r
-        else: step.G = step.r + gamma*episode[len(episode)-i].G
+        amortized_step_reward = step.r/float(len(episode))
+        if i == 0:
+            step.G = amortized_step_reward
+        else:
+            step.G = amortized_step_reward + episode[len(episode)-i].G
 
     return episode
 
@@ -372,6 +375,8 @@ if __name__ == '__main__':
 
     print('Size of policy net', policy_net_layers)
     print('Size of value net', value_net_layers)
+
+    previous_episode = None
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
