@@ -20,7 +20,7 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 cd
 cd /gpfsnyu/home/qhv200/deep_rl
 source activate pytorch_gpu
-python policy_gradient.py --game hunters --max_episode_len 500 --gamma 0.8 --hidden_layers {hidden_layers} --save_policy {save_policy}"""
+python policy_gradient.py --game hunters --num_episodes 1000000 --max_episode_len 500 --gamma 0.8 --hidden_layers {hidden_layers} --save_policy {save_policy}"""
 SCRIPT_SUFFIX = '.sbatch_script'
 
 if not os.path.exists(HUNTER_FOLDER):
