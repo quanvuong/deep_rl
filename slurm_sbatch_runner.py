@@ -10,16 +10,13 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 #SBATCH --error={error_output}
 
 #SBATCH --time=00
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=4000mb
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=16000MB
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=qhv200@nyu.edu
 #SBATCH --partition=debug
 #SBATCH --gres=gpu:1
-#SBATCH --share
+
 cd
 cd /gpfsnyu/home/qhv200/deep_rl
 source activate pytorch_gpu
