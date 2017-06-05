@@ -345,9 +345,9 @@ if __name__ == '__main__':
 
     handles = [nvmlDeviceGetHandleByIndex(i) for i in range(deviceCount)]
     infos = [nvmlDeviceGetMemoryInfo(handle) for handle in handles]
-    print("Total memory: {}".format(' '.join(info.total for info in infos)))
-    print("Free memory: {}".format(' '.join(info.free for info in infos)))
-    print("Used memory: {}".format(' '.join(info.used for info in infos)))
+    print("Total memory: {}".format(' '.join(str(info.total) for info in infos)))
+    print("Free memory: {}".format(' '.join(str(info.free) for info in infos)))
+    print("Used memory: {}".format(' '.join(str(info.used) for info in infos)))
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
@@ -362,7 +362,7 @@ if __name__ == '__main__':
 
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
-            print("Beginning of episode {} Free memory: {}".format(num_episode, ' '.join(info.free for info in infos)))
+            print("Beginning of episode {} Free memory: {}".format(num_episode, ' '.join(str(info.free) for info in infos)))
             episode = run_episode(policy_net, gamma=args.gamma)
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
