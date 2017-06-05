@@ -149,13 +149,15 @@ def build_policy_net(layers):
         def __init__(self, layers):
             super(PolicyNet, self).__init__()
             self.lstm = torch.nn.LSTMCell(layers[0], layers[1])
-            self.linear = torch.nn.Linear(layers[1], layers[2])
+            self.linear1 = torch.nn.Linear(layers[1], layers[2])
+            self.linear2 = torch.nn.Linear(layers[2], layers[3])
             self.layers = layers
 
         def forward(self, x, h0, c0):
             h1, c1 = self.lstm(x, (h0, c0))
-            o1 = self.linear(h1)
-            return o1, h1, c1
+            o1 = self.linear1(h1)
+            o2 = self.linear2(o1)
+            return o2, h1, c1
 
     policy_net = PolicyNet(layers)
     return policy_net.cuda() if cuda else policy_net
@@ -201,7 +203,7 @@ def run_policy_net(policy_net, state):
     '''
     # Prepare initial inputs for policy_net
     a_indices = []
-    h_size, a_size = policy_net.layers[1], policy_net.layers[2]
+    h_size, a_size = policy_net.layers[1], policy_net.layers[-1]
     a_n = np.zeros(a_size)
     h_n, c_n = Variable(ZeroTensor(1, h_size)), Variable(ZeroTensor(1, h_size))
     x_n = Variable(FloatTensor([np.append(a_n, state)]))
@@ -215,7 +217,7 @@ def run_policy_net(policy_net, state):
         # Select action over possible ones
         action_mask = np.expand_dims(game.filter_actions(state, n), axis=0)
         dist = masked_softmax(o_n, action_mask)
-        a_index = torch.multinomial(dist.data,1)[0,0]
+        a_index = torch.multinomial(dist.data, 1)[0, 0]
 
         # Record action for this iteration/agent
         a_indices.append(a_index)
@@ -251,7 +253,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
     values = Variable(FloatTensor(np.asarray(values)))
 
     # Prepare for one forward pass, with the batch containing the entire episode
-    h_size, a_size = policy_net.layers[1], policy_net.layers[2]
+    h_size, a_size = policy_net.layers[1], policy_net.layers[-1]
     s_size = len(episode[0].s)
     h_n_batch = Variable(ZeroTensor(len(episode), h_size))
     c_n_batch = Variable(ZeroTensor(len(episode), h_size))
@@ -261,10 +263,11 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
     input_batch = ZeroTensor(game.num_agents, len(episode), a_size + s_size)
 
     # Fill input_batch with concat(a_{n-1}, state) for each agent, for each time-step
-    for i in range(game.num_agents):
-        for j, step in enumerate(episode):
-            input_batch[i, j, a_size:].copy_(FloatTensor(step.s))
-            if i > 0: input_batch[i, j, step.a[i-1]] = 1
+    for agent in range(game.num_agents):
+        for idx, step in enumerate(episode):
+            input_batch[agent, idx, a_size:].copy_(FloatTensor(step.s))
+            if agent > 0:
+                input_batch[agent, idx, step.a[agent-1]] = 1
     input_batch = Variable(input_batch)
 
     # Fill action_mask_batch with action masks for each state
@@ -273,7 +276,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
         for j, step in enumerate(episode):
             action_mask_batch[i,j] = game.filter_actions(step.s, i)
 
-    # Do a forward pass, and fill sum_log_probs with sum(log(p)) for each time-step
+    # Do a forward pass, and fill sum_log_probs with csum(log(p)) for each time-step
     sum_log_probs = Variable(ZeroTensor(len(episode)))
     entropy_estimate = Variable(ZeroTensor(1))
     for i in range(game.num_agents):
@@ -323,6 +326,7 @@ if __name__ == '__main__':
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
     parser.add_argument('--gamma', default=1, type=float, help='Global discount factor for Monte-Carlo and TD returns')
     parser.add_argument('--save_policy', type=str, help='Save the trained policy under this filename')
+    parser.add_argument('--hidden_layers', nargs='+', type=int, help='Specify the hidden layers of the policy net')
     args = parser.parse_args()
     print(args)
 
@@ -353,12 +357,15 @@ if __name__ == '__main__':
         game.set_options({'grid_z': 6, 'grid_y': 6, 'grid_x': 6})
     elif args.game == 'hunters':
         import hunters as game
-        k, m = 5, 5
-        policy_net_layers = [3*(k+m) + 9, 128, 9]
+        k, m = 6, 6
+        policy_net_layers = [3*(k+m) + 9] + args.hidden_layers + [9]
         value_net_layers = [3*(k+m), 64, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': 3, 'k': k, 'm': m, 'n': 6})
+
+    print('Size of policy net', policy_net_layers)
+    print('Size of value net', value_net_layers)
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
