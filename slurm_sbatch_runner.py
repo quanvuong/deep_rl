@@ -11,8 +11,8 @@ BASE_SBATCH_SCRIPT = """#!/bin/bash -l
 #SBATCH --error={error_output}
 
 #SBATCH --time=00
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=16000MB
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=10000MB
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=qhv200@nyu.edu
 #SBATCH --partition=debug
