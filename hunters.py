@@ -167,7 +167,8 @@ def filter_joint_actions(state):
 
     # If a hunter is on a border, invalidate actions that move off the grid
     for agent in range(k):
-        if state[3*agent] == 0: continue  # Only look at hunters in the game
+        if state[3*agent] == 0:
+            continue  # Only look at hunters in the game
         pos = state[3*agent+1:3*agent+3]
         if pos[0] == 0:  # Against top wall
             idx = _select_idx([0, 1, 2], agent)

@@ -17,6 +17,13 @@ import random
 import sys
 import torch
 from collections import OrderedDict
+from pynvml import *
+nvmlInit()
+print("Driver Version:", nvmlSystemGetDriverVersion())
+deviceCount = nvmlDeviceGetCount()
+for i in range(deviceCount):
+    handle = nvmlDeviceGetHandleByIndex(i)
+    print("Device", i, ":", nvmlDeviceGetName(handle))
 
 from namedlist import namedlist
 from torch.autograd import Variable
@@ -336,6 +343,12 @@ if __name__ == '__main__':
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': grid_size})
 
+    handle = nvmlDeviceGetHandleByIndex(0)
+    info = nvmlDeviceGetMemoryInfo(handle)
+    print("Total memory:", info.total)
+    print("Free memory:", info.free)
+    print("Used memory:", info.used)
+
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
         value_net = build_value_net(value_net_layers)
@@ -349,6 +362,7 @@ if __name__ == '__main__':
 
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
+            print("Beginning of episode {} Free memory:".format(num_episode), info.free)
             episode = run_episode(policy_net, gamma=args.gamma)
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
