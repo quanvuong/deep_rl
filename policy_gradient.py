@@ -74,7 +74,10 @@ def build_value_net(layers):
     value_net = torch.nn.Sequential(
                   torch.nn.Linear(layers[0], layers[1]),
                   torch.nn.ReLU(),
-                  torch.nn.Linear(layers[1], layers[2]))
+                  torch.nn.Linear(layers[1], layers[2]),
+                  torch.nn.ReLU(),
+                  torch.nn.Linear(layers[2], layers[3])
+    )
     return value_net.cuda() if cuda else value_net
 
 def train_value_net(value_net, episode, td=None, gamma=1.0):
@@ -362,7 +365,7 @@ if __name__ == '__main__':
         import hunters as game
         k, m = 6, 6
         policy_net_layers = [3*(k+m) + 9] + args.hidden_layers + [9]
-        value_net_layers = [3*(k+m), 64, 1]
+        value_net_layers = [3*(k+m)] + [64]*len(args.hidden_layers) + [1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': 3, 'k': k, 'm': m, 'n': 6})
