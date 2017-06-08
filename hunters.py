@@ -93,7 +93,7 @@ def perform_action(s, a_indices):
             positions[i:i+3] = [0, -1, -1]
         else:
             positions[i] = 1
-            sa = s[i+1:i+3] + a[i-(i/3):i-(i/3)+2]
+            sa = s[i+1:i+3] + a[i-int(i/3):i-int(i/3)+2]
             positions[i+1:i+3] = np.clip(sa, 0, n-1)
 
     # Remove rabbits (and optionally hunters) that overlap
