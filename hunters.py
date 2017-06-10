@@ -69,6 +69,10 @@ def perform_action(s, a_indices):
     '''Performs an action given by a_indices in state s. Returns:
        (s_next, reward)'''
     # Validate inputs
+    global num_agents
+    global k
+    global m
+
     a = action_indices_to_coordinates(a_indices)
     assert valid_state(s)
     assert valid_action(a)
@@ -99,18 +103,37 @@ def perform_action(s, a_indices):
     # Remove rabbits (and optionally hunters) that overlap
     reward = timestep_reward
     hunter_pos, rabbit_pos = positions[:3*k], positions[3*k:]
+    captured_rabbit_idxes = []
+    inactive_hunter_idxes = []
     for i in range(0, len(hunter_pos), 3):
         hunter = hunter_pos[i:i+3]
         for j in range(0, len(rabbit_pos), 3):
             rabbit = rabbit_pos[j:j+3]
             if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
                 # A rabbit has been captured
-                rabbit_pos[j:j+3] = [0, -1, -1]
-                reward += capture_reward
-                if remove_hunter: hunter_pos[i:i+3] = [0, -1, -1]
+                # Remove captured rabbit and inactive hunter
+                # +4 because the last index in not inclusive
+                if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
+                    # A rabbit has been captured
+                    rabbit_pos[j:j + 3] = [0, -1, -1]
+                    captured_rabbit_idxes += [j, j+1, j+2]
+                    reward += capture_reward
+                    if remove_hunter:
+                        hunter_pos[i:i + 3] = [0, -1, -1]
+                        inactive_hunter_idxes += [i, i+1, i+2]
+
+    rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
+    hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
+    k -= int(len(inactive_hunter_idxes) / 3)
+    m -= int(len(captured_rabbit_idxes) / 3)
 
     # Return (s_next, reward)
     s_next = np.concatenate((hunter_pos, rabbit_pos))
+
+    # Hacky way to dynamically reduce the num_agents
+    num_agents = k
+    # print('next_state', s_next)
+    # print('next_state_len', len(s_next))
     return s_next, reward
 
 def perform_joint_action(s, joint_a):
@@ -127,14 +150,14 @@ def filter_actions(state, agent_no):
     avail_a = np.ones(9, dtype=int)
     hunter_pos = state[3*agent_no + 1:3*agent_no + 3]
 
-    # Hunter is out of the game, can only stay
-    if state[3*agent_no] == 0:
-        avail_a = [0] * 9
-        avail_a[4] = 1
-        return avail_a
+    # # Hunter is out of the game, can only stay
+    # if state[3*agent_no] == 0:
+    #     avail_a = [0] * 9
+    #     avail_a[4] = 1
+    #     return avail_a
 
     # Hunter is still in the game, check all possible actions
-    for i in range(9):
+    for i in range(len(agent_action_space)):
         # Check if action moves us off the grid
         a = agent_action_space[i]
         sa = hunter_pos + a
@@ -207,15 +230,19 @@ def filter_joint_actions(state):
 
 def is_end(s):
     '''Given a state, return if the game should end.'''
-    rabbit_status = s[3*k::3]
-    if end_when_capture is not None:
-        return np.count_nonzero(rabbit_status == 0) >= end_when_capture
-    return (rabbit_status == 0).all()
+    if len(s) == 0:
+        return True
+    # rabbit_status = s[3*k::3]
+    # if end_when_capture is not None:
+    #     return np.count_nonzero(rabbit_status == 0) >= end_when_capture
+    # return (rabbit_status == 0).all()
 
 def array_equal(a, b):
     '''Because np.array_equal() is too slow. Three-element arrays only.'''
     return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
 
+
+printed_option = False
 def set_options(options):
     '''Set some game options, if given.'''
     global rabbit_action, remove_hunter, timestep_reward, capture_reward, n, \
@@ -229,7 +256,10 @@ def set_options(options):
     k = options.get('k', k)
     m = options.get('m', m)
     num_agents = k
-    print(options)
+    global printed_option
+    if not printed_option:
+        printed_option = True
+        print(options)
 
 ## Functions to convert action representations ##
 
