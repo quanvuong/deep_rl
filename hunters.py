@@ -20,6 +20,7 @@
 '''
 
 import numpy as np
+import sys
 
 n = 6  # grid size
 k = 2  # hunters
@@ -69,13 +70,18 @@ def valid_action(a):
     '''Returns if the given action vector is valid'''
     return a.shape == (2*k, ) and np.all([-1 <= e <= 1 for e in a])
 
+
 def fill_in_stay_action(s, a_indices):
 
-    agents_status = s[::3]
+    hunters_status = np.split(s[::3], 2)[0]
     new_a_indices = []
     num_inactive_hunters = 0
 
-    for agent, status in enumerate(agents_status):
+    # print('a_indices', a_indices)
+    # print('state', s)
+
+    for agent, status in enumerate(hunters_status):
+        # print('agent', agent, 'status', status)
         if status == ACTIVE_STATUS:
             new_a_indices.append(a_indices[agent - num_inactive_hunters])
         elif status == INACTIVE_STATUS:
@@ -84,6 +90,11 @@ def fill_in_stay_action(s, a_indices):
         else:
             print('INVALID AGENT STATUS')
             assert False
+
+    # print('new_a_indices', new_a_indices)
+    # print()
+    # sys.stdout.flush()
+    # sys.exit(0)
 
     return new_a_indices
 
@@ -96,8 +107,6 @@ def perform_action(s, a_indices):
        The function must fill in the stay action for the inactive hunters.'''
     # Validate inputs
     global num_active_hunters
-
-    a_indices = fill_in_stay_action(s, a_indices)
     a = action_indices_to_coordinates(a_indices)
     assert valid_state(s)
     assert valid_action(a)
@@ -150,6 +159,27 @@ def perform_joint_action(s, joint_a):
        (s_next, reward)'''
     a_indices = joint_action_to_indices(joint_a)
     return perform_action(s, a_indices)
+
+def get_active_hunters_original_idx(state):
+    '''
+    Get the original indices of active hunters
+    :param state: state of the game (hunters states, rabbits states)
+    :return: the original index of the active hunters at the start of the game
+    '''
+    hunters_status = np.split(state[::3], 2)[0]
+
+    active_hunters_original_indices = []
+
+    for hunter, status in enumerate(hunters_status):
+        if status == ACTIVE_STATUS:
+            active_hunters_original_indices.append(hunter)
+        elif status == INACTIVE_STATUS:
+            continue
+        else:
+            print('INVALID STATUS')
+            sys.exit(1)
+
+    return active_hunters_original_indices
 
 def filter_actions(state, agent_no):
     '''Filter the actions available for an agent in a given state. Returns a
@@ -248,7 +278,10 @@ def array_equal(a, b):
     '''Because np.array_equal() is too slow. Three-element arrays only.'''
     return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
 
+options_printed = False
+
 def set_options(options):
+    global options_printed
     '''Set some game options, if given.'''
     global rabbit_action, remove_hunter, timestep_reward, capture_reward, n, \
            k, m, num_agents, end_when_capture, num_active_hunters
@@ -262,7 +295,9 @@ def set_options(options):
     m = options.get('m', m)
     num_agents = k
     num_active_hunters = k
-    print(options)
+    if not options_printed:
+        print(options)
+    options_printed = True
 
 ## Functions to convert action representations ##
 
@@ -273,6 +308,7 @@ agent_action_space = [
 ]
 
 STAY_ACTION_IDX = 4
+assert agent_action_space[STAY_ACTION_IDX].tolist() == [0, 0]
 
 def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
