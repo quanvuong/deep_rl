@@ -20,11 +20,16 @@
 '''
 
 import numpy as np
+import sys
 
 n = 6  # grid size
 k = 2  # hunters
 m = 2  # rabbits
 num_agents = k
+num_active_hunters = k
+
+ACTIVE_STATUS = 1
+INACTIVE_STATUS = 0
 
 # None: rabbits do not move
 # 'random': rabbits move one block randomly
@@ -65,13 +70,37 @@ def valid_action(a):
     '''Returns if the given action vector is valid'''
     return a.shape == (2*k, ) and np.all([-1 <= e <= 1 for e in a])
 
+def fill_in_stay_action(s, a_indices):
+
+    agents_status = s[::3]
+    new_a_indices = []
+    num_inactive_hunters = 0
+
+    for agent, status in enumerate(agents_status):
+        if status == ACTIVE_STATUS:
+            new_a_indices.append(a_indices[agent - num_inactive_hunters])
+        elif status == INACTIVE_STATUS:
+            new_a_indices.append(STAY_ACTION_IDX)
+            num_inactive_hunters += 1
+        else:
+            print('INVALID AGENT STATUS')
+            assert False
+
+    return new_a_indices
+
 def perform_action(s, a_indices):
     '''Performs an action given by a_indices in state s. Returns:
-       (s_next, reward)'''
+       (s_next, reward). 
+       
+       a_indices only contain action for active hunters.
+       
+       The function must fill in the stay action for the inactive hunters.'''
     # Validate inputs
+    a_indices = fill_in_stay_action(s, a_indices)
     a = action_indices_to_coordinates(a_indices)
     assert valid_state(s)
     assert valid_action(a)
+
 
     # Calculate rabbit actions
     if rabbit_action is None:
@@ -219,7 +248,7 @@ def array_equal(a, b):
 def set_options(options):
     '''Set some game options, if given.'''
     global rabbit_action, remove_hunter, timestep_reward, capture_reward, n, \
-           k, m, num_agents, end_when_capture
+           k, m, num_agents, end_when_capture, num_active_hunters
     rabbit_action = options.get('rabbit_action', rabbit_action)
     remove_hunter = options.get('remove_hunter', remove_hunter)
     timestep_reward = options.get('timestep_reward', timestep_reward)
@@ -229,6 +258,7 @@ def set_options(options):
     k = options.get('k', k)
     m = options.get('m', m)
     num_agents = k
+    num_active_hunters = k
     print(options)
 
 ## Functions to convert action representations ##
@@ -238,6 +268,9 @@ agent_action_space = [
     np.array([0, -1]), np.array([0, 0]), np.array([0, 1]),
     np.array([1, -1]), np.array([1, 0]), np.array([1, 1])
 ]
+
+STAY_ACTION_IDX = 4
+STAY_ACTION = agent_action_space[STAY_ACTION]
 
 def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
