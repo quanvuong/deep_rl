@@ -20,7 +20,6 @@
 '''
 
 import numpy as np
-import sys
 
 n = 6  # grid size
 k = 2  # hunters
@@ -270,7 +269,6 @@ agent_action_space = [
 ]
 
 STAY_ACTION_IDX = 4
-STAY_ACTION = agent_action_space[STAY_ACTION]
 
 def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
