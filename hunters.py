@@ -95,6 +95,8 @@ def perform_action(s, a_indices):
        
        The function must fill in the stay action for the inactive hunters.'''
     # Validate inputs
+    global num_active_hunters
+
     a_indices = fill_in_stay_action(s, a_indices)
     a = action_indices_to_coordinates(a_indices)
     assert valid_state(s)
@@ -135,7 +137,9 @@ def perform_action(s, a_indices):
                 # A rabbit has been captured
                 rabbit_pos[j:j+3] = [0, -1, -1]
                 reward += capture_reward
-                if remove_hunter: hunter_pos[i:i+3] = [0, -1, -1]
+                if remove_hunter:
+                    hunter_pos[i:i+3] = [0, -1, -1]
+                    num_active_hunters -= 1
 
     # Return (s_next, reward)
     s_next = np.concatenate((hunter_pos, rabbit_pos))
