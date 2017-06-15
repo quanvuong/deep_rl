@@ -112,15 +112,12 @@ def perform_action(s, a_indices):
             if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
                 # A rabbit has been captured
                 # Remove captured rabbit and inactive hunter
-                # +4 because the last index in not inclusive
-                if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
-                    # A rabbit has been captured
-                    rabbit_pos[j:j + 3] = [0, -1, -1]
-                    captured_rabbit_idxes += [j, j+1, j+2]
-                    reward += capture_reward
-                    if remove_hunter:
-                        hunter_pos[i:i + 3] = [0, -1, -1]
-                        inactive_hunter_idxes += [i, i+1, i+2]
+                rabbit_pos[j:j + 3] = [0, -1, -1]
+                captured_rabbit_idxes += [j, j+1, j+2]
+                reward += capture_reward
+                if remove_hunter:
+                    hunter_pos[i:i + 3] = [0, -1, -1]
+                    inactive_hunter_idxes += [i, i+1, i+2]
 
     rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
     hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
