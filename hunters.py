@@ -77,11 +77,7 @@ def fill_in_stay_action(s, a_indices):
     new_a_indices = []
     num_inactive_hunters = 0
 
-    # print('a_indices', a_indices)
-    # print('state', s)
-
     for agent, status in enumerate(hunters_status):
-        # print('agent', agent, 'status', status)
         if status == ACTIVE_STATUS:
             new_a_indices.append(a_indices[agent - num_inactive_hunters])
         elif status == INACTIVE_STATUS:
@@ -90,11 +86,6 @@ def fill_in_stay_action(s, a_indices):
         else:
             print('INVALID AGENT STATUS')
             assert False
-
-    # print('new_a_indices', new_a_indices)
-    # print()
-    # sys.stdout.flush()
-    # sys.exit(0)
 
     return new_a_indices
 
@@ -109,6 +100,7 @@ def perform_action(s, a_indices):
     global num_active_hunters
     a_indices = fill_in_stay_action(s, a_indices)
     a = action_indices_to_coordinates(a_indices)
+
     assert valid_state(s)
     assert valid_action(a)
 
