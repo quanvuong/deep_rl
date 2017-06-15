@@ -20,7 +20,7 @@
 '''
 
 import numpy as np
-
+import sys
 
 class GameOptions(object):
 
@@ -63,7 +63,7 @@ class RabbitHunter(object):
         '''Returns a random initial state. The state vector is a flat array of:
            concat(hunter positions, rabbit positions).'''
 
-        start = np.random.randint(0, self.grid_size, size=3 * self.num_hunters + 3 * self.num_rabbits)
+        start = np.random.randint(0, self.grid_size, size=3 * self.num_agents)
         start[::3] = 1
 
         return start
@@ -72,7 +72,6 @@ class RabbitHunter(object):
         '''Performs an action given by a_indices in state s. Returns:
            (s_next, reward)'''
         a = action_indices_to_coordinates(a_indices)
-        # print(a)
 
         # Get positions after hunter and rabbit actions
         # a = np.concatenate((a, rabbit_a))
@@ -102,6 +101,7 @@ class RabbitHunter(object):
             hunter = hunter_pos[i:i + 3]
             for j in range(0, len(rabbit_pos), 3):
                 rabbit = rabbit_pos[j:j + 3]
+                sys.stdout.flush()
                 if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
                     # A rabbit has been captured
                     # Remove captured rabbit and respective hunter
@@ -119,6 +119,7 @@ class RabbitHunter(object):
         # Return (s_next, reward)
         s_next = np.concatenate((hunter_pos, rabbit_pos))
 
+        # print('len(s_next)', len(s_next))
         return s_next, reward
 
     def filter_actions(self, state, agent_no):
@@ -144,6 +145,7 @@ class RabbitHunter(object):
 
 def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
+    # print('a_indices', a_indices)
     coords = [RabbitHunter.action_space[i] for i in a_indices]
     return np.concatenate(coords)
 
