@@ -43,7 +43,12 @@ class RabbitHunter(object):
 
     def __init__(self, options):
         self.set_options(options)
+        self.initial_options = options
+        self.agent_rep_size = 3
         print(options.__dict__)
+
+    def reset(self):
+        self.set_options(self.initial_options)
 
     def set_options(self, options):
         self.num_hunters = options.num_hunters
@@ -141,6 +146,10 @@ class RabbitHunter(object):
         if len(state) == 0:
             return True
         return False
+
+    def get_num_hunters_from_state_size(self, state_size):
+        return int(state_size / self.agent_rep_size / 2)
+
 
 def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
