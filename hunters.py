@@ -64,6 +64,9 @@ class RabbitHunter(object):
         self.timestep_reward = options.timestep_reward
         self.capture_reward = options.capture_reward
 
+    def get_min_state_size(self):
+        return 6
+
     def start_state(self):
         '''Returns a random initial state. The state vector is a flat array of:
            concat(hunter positions, rabbit positions).'''
