@@ -20,7 +20,9 @@
 """
 
 import numpy as np
+import sys
 
+outfile = sys.stdout
 
 class GameOptions(object):
 
@@ -44,8 +46,9 @@ class RabbitHunter(object):
     num_agent_type = 2
 
     def __init__(self, options):
-        self.set_options(options)
         self.initial_options = options
+        self.set_options(options)
+
         self.agent_rep_size = 2
         print(options.__dict__)
 
@@ -83,9 +86,14 @@ class RabbitHunter(object):
         '''Performs an action given by a_indices in state s. Returns:
            (s_next, reward)'''
         a = action_indices_to_coordinates(a_indices)
+        assert self.valid_action(a)
+        assert self.valid_state(state)
+        # print()
+        # print('inside perform action')
 
-        # Get positions after hunter and rabbit actions
+        # Get positions after hunter actions
         hunter_pos = np.zeros(self.num_active_hunters * self.agent_rep_size, dtype=np.int)
+        # print('empty hunter_pos', hunter_pos)
         for hunter in range(0, self.num_active_hunters):
             hunter_idx = hunter * self.agent_rep_size
 
@@ -98,37 +106,54 @@ class RabbitHunter(object):
         reward = self.timestep_reward
         rabbit_pos = state[self.num_active_hunters * self.agent_rep_size:]
 
+        # print('state before', state)
+        # print('a_indices', a_indices)
+        # print('hunter position', hunter_pos)
+        # print('rabbit position', rabbit_pos)
         captured_rabbit_idxes = []
         inactive_hunter_idxes = []
-        for i in range(0, len(hunter_pos), self.agent_rep_size):
-            hunter = hunter_pos[i:i + self.agent_rep_size]
-            for j in range(0, len(rabbit_pos), self.agent_rep_size):
-                rabbit = rabbit_pos[j:j + self.agent_rep_size]
-                if array_equal(hunter, rabbit):
-                    # A rabbit has been captured
-                    # Remove captured rabbit and respective hunter
+        for hunter in range(0, self.num_active_hunters):
+            h_idx = hunter * self.agent_rep_size
 
-                    # We set these so that one hunter can only capture 1 hunter and vice versa
-                    rabbit_pos[j:j + self.agent_rep_size] = [-1, -1]
-                    hunter_pos[i:i + self.agent_rep_size] = [-1, -1]
+            for rabbit in range(0, self.num_active_rabbits):
+                r_idx = rabbit * self.agent_rep_size
 
-                    captured_rabbit_idxes += [j, j + 1]
-                    inactive_hunter_idxes += [i, i + 1]
+                h_pos = hunter_pos[h_idx:h_idx + self.agent_rep_size]
+                r_pos = rabbit_pos[r_idx:r_idx + self.agent_rep_size]
+
+                if array_equal(h_pos, r_pos) and active_agent(h_pos) and active_agent(r_pos):
+                    # print(f'hunter {h_pos} catches rabbit {r_pos}')
+
+                    hunter_pos[h_idx:h_idx + self.agent_rep_size] = [-1, -1]
+                    rabbit_pos[r_idx:r_idx + self.agent_rep_size] = [-1, -1]
+
+                    captured_rabbit_idxes += [r_idx, r_idx + 1]
+                    inactive_hunter_idxes += [h_idx, h_idx + 1]
 
                     reward += self.capture_reward
                     self.num_active_hunters -= 1
                     self.num_active_rabbits -= 1
+                    self.num_active_agents -= 2
 
-        # print('inside perform action')
-        # print('state', state)
         # print('captured_rabbit_idxes', captured_rabbit_idxes)
         # print('inactive_hunter_idxes', inactive_hunter_idxes)
+        #
+        # print('before delete')
+        # print('hunter position', hunter_pos)
+        # print('rabbit position', rabbit_pos)
 
         rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
         hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
 
+        # print('after delete')
+        # print('hunter position', hunter_pos)
+        # print('rabbit position', rabbit_pos)
+        #
         # Return (s_next, reward)
         s_next = np.concatenate((hunter_pos, rabbit_pos))
+
+        # print('s_next', s_next)
+        # sys.stdout.flush()
 
         return s_next, reward
 
@@ -158,6 +183,14 @@ class RabbitHunter(object):
         # / 2 because there are two type of agents
         return int(state_size / self.agent_rep_size / RabbitHunter.num_agent_type)
 
+    def valid_state(self, state):
+        '''Returns if the given state vector is valid.'''
+        return state.shape == (self.agent_rep_size * self.num_active_agents, ) and \
+            np.all([0 <= e < self.grid_size for e in state])
+
+    def valid_action(self, a):
+        return a.shape == (self.num_active_hunters * len(RabbitHunter.action_space[0]), ) and \
+            np.all([-1 <= e <= 1 for e in a])
 
 def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
@@ -168,11 +201,11 @@ def array_equal(a, b):
     '''Because np.array_equal() is too slow. Three-element arrays only.'''
     return a[0] == b[0] and a[1] == b[1]
 
-# def valid_state(s):
-#     '''Returns if the given state vector is valid.'''
-#     return s.shape == (3*k+3*m, ) and \
-#            np.all([-1 <= e < n for e in s]) and \
-#            np.all([e in (0, 1) for e in s[::3]])
+def active_agent(position):
+    if -1 in position:
+        return False
+    return True
+
 
 # def valid_action(a):
 #     '''Returns if the given action vector is valid'''
