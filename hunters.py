@@ -24,13 +24,15 @@ import numpy as np
 
 class GameOptions(object):
 
-    def __init__(self, num_hunters=None, num_rabbits=None, grid_size=None, timestep_reward=None, capture_reward=None):
+    def __init__(self, num_hunters=None, num_rabbits=None, grid_size=None, timestep_reward=None, capture_reward=None,
+                 end_when_capture=None):
 
         self.num_hunters = num_hunters
         self.num_rabbits = num_rabbits
         self.grid_size = grid_size
         self.timestep_reward = timestep_reward
         self.capture_reward = capture_reward
+        self.end_when_capture = end_when_capture
 
 
 class RabbitHunter(object):
@@ -63,6 +65,8 @@ class RabbitHunter(object):
         self.grid_size = options.grid_size
         self.timestep_reward = options.timestep_reward
         self.capture_reward = options.capture_reward
+
+        self.end_when_capture = options.end_when_capture
 
     def get_min_state_size(self):
         return 6
@@ -148,9 +152,16 @@ class RabbitHunter(object):
         '''Given a state, return if the game should end.'''
         if len(state) == 0:
             return True
+        if self.end_when_capture is not None:
+            num_rabbits_remaining = self.get_num_rabbits_from_state_size(len(state))
+            if (self.num_rabbits - num_rabbits_remaining) >= self.end_when_capture:
+                return True
         return False
 
     def get_num_hunters_from_state_size(self, state_size):
+        return int(state_size / self.agent_rep_size / 2)
+
+    def get_num_rabbits_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
 
 
