@@ -46,7 +46,7 @@ class RabbitHunter(object):
     def __init__(self, options):
         self.set_options(options)
         self.initial_options = options
-        self.agent_rep_size = 3
+        # self.agent_rep_size = 3
         print(options.__dict__)
 
     def reset(self):
@@ -68,17 +68,25 @@ class RabbitHunter(object):
 
         self.end_when_capture = options.end_when_capture
 
-    def get_min_state_size(self):
-        return 6
+    # def get_min_state_size(self):
+    #     return 6
+
+    def get_one_hot_one_agent_type(self, num_agents):
+        size = self.grid_size * self.grid_size
+        poses = np.random.randint(0, size, size=num_agents)
+        oh = np.zeros(size, dtype=np.int8)
+
+        oh[poses] = 1
+        return oh
 
     def start_state(self):
         '''Returns a random initial state. The state vector is a flat array of:
            concat(hunter positions, rabbit positions).'''
 
-        start = np.random.randint(0, self.grid_size, size=3 * self.num_hunters + 3 * self.num_rabbits)
-        start[::3] = 1
+        hunter_oh = self.get_one_hot_one_agent_type(self.num_hunters)
+        rabbit_oh = self.get_one_hot_one_agent_type(self.num_rabbits)
 
-        return start
+        return np.concatenate([hunter_oh, rabbit_oh])
 
     def perform_action(self, state, a_indices):
         '''Performs an action given by a_indices in state s. Returns:
@@ -169,6 +177,7 @@ def action_indices_to_coordinates(a_indices):
     '''Converts a list of action indices to action coordinates.'''
     coords = [RabbitHunter.action_space[i] for i in a_indices]
     return np.concatenate(coords)
+
 
 def array_equal(a, b):
     '''Because np.array_equal() is too slow. Three-element arrays only.'''
