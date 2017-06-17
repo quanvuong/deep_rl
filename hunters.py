@@ -133,21 +133,6 @@ class RabbitHunter(object):
 
         return s_next, reward
 
-    def filter_actions(self, state, agent_no):
-        '''Filter the actions available for an agent in a given state. Returns a
-           bitmap of available actions. Hunter should be active.
-           E.g. an agent in a corner is not allowed to move into a wall.'''
-        avail_a = np.ones(9, dtype=int)
-        hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
-
-        for i in range(len(RabbitHunter.action_space)):
-            # Check if action moves us off the grid
-            a = RabbitHunter.action_space[i]
-            sa = hunter_pos + a
-            if (sa[0] < 0 or sa[0] >= self.grid_size) or (sa[1] < 0 or sa[1] >= self.grid_size):
-                avail_a[i] = 0
-        return avail_a
-
     def is_end(self, state):
         '''Given a state, return if the game should end.'''
         if len(state) == 0:

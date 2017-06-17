@@ -6,7 +6,6 @@
       game.start_state() - returns start state of the game
       game.is_end(state) - given a state, return if the game/episode has ended
       game.perform_action(s, a) - given action indices at state s, returns next_s, reward
-      game.filter_actions(s, n) - filter actions available for an agent in a given state
       game.set_options(options) - set options for the game
 '''
 
