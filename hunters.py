@@ -35,6 +35,7 @@ class GameOptions(object):
         self.end_when_capture = end_when_capture
 
 
+# noinspection PyAttributeOutsideInit
 class RabbitHunter(object):
 
     action_space = [
@@ -46,7 +47,9 @@ class RabbitHunter(object):
     def __init__(self, options):
         self.set_options(options)
         self.initial_options = options
-        # self.agent_rep_size = 3
+        # We keep an implied ordering of the hunters
+        # Each hunter is referred to by its index
+        self.hunters_poses = []
         print(options.__dict__)
 
     def reset(self):
@@ -67,32 +70,55 @@ class RabbitHunter(object):
         self.capture_reward = options.capture_reward
 
         self.end_when_capture = options.end_when_capture
+        self.action_space = [
+            - self.grid_size - 1, - self.grid_size, - self.grid_size+1,
+            -1, 0, +1,
+            self.grid_size - 1, +self.grid_size, +self.grid_size + 1,
+        ]
+        self.oh_size_one_agent = self.grid_size * self.grid_size
 
     # def get_min_state_size(self):
     #     return 6
 
     def get_one_hot_one_agent_type(self, num_agents):
-        size = self.grid_size * self.grid_size
-        poses = np.random.randint(0, size, size=num_agents)
-        oh = np.zeros(size, dtype=np.int8)
+        poses = np.random.randint(0, self.oh_size_one_agent, size=num_agents)
+
+        oh = np.zeros(self.oh_size_one_agent, dtype=np.int8)
 
         oh[poses] = 1
-        return oh
+        return oh, poses
 
     def start_state(self):
         '''Returns a random initial state. The state vector is a flat array of:
            concat(hunter positions, rabbit positions).'''
 
-        hunter_oh = self.get_one_hot_one_agent_type(self.num_hunters)
+        hunter_oh, self.hunters_poses = self.get_one_hot_one_agent_type(self.num_hunters)
         rabbit_oh = self.get_one_hot_one_agent_type(self.num_rabbits)
 
         return np.concatenate([hunter_oh, rabbit_oh])
 
+    def act_indices_to_oh_mov(self, a_indices):
+        movs = [self.action_space[i] for i in a_indices]
+        return np.concatenate(movs)
+
     def perform_action(self, state, a_indices):
         '''Performs an action given by a_indices in state s. Returns:
            (s_next, reward)'''
-        a = action_indices_to_coordinates(a_indices)
-        # print(a)
+        acts = self.act_indices_to_oh_mov(a_indices)
+
+        # Get positions of hunters after actions
+        for idx, hunter_pos in enumerate(self.hunters_poses):
+            next_pos = hunter_pos + acts[idx]
+
+            # Clip it so that it remains within range
+            next_pos = np.clip(next_pos, 0, self.oh_size_one_agent)
+
+            self.hunters_poses[idx] = next_pos
+            self.hunters_poses[hunter_pos] = 0
+            self.hunters_poses[next_pos] = 1
+
+        # Check for overlapping rabbits and hunters
+
 
         # Get positions after hunter and rabbit actions
         # a = np.concatenate((a, rabbit_a))
@@ -172,11 +198,7 @@ class RabbitHunter(object):
     def get_num_rabbits_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
 
-
-def action_indices_to_coordinates(a_indices):
-    '''Converts a list of action indices to action coordinates.'''
-    coords = [RabbitHunter.action_space[i] for i in a_indices]
-    return np.concatenate(coords)
+    def act_indices_to_oh_mov(a_indices):
 
 
 def array_equal(a, b):
