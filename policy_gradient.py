@@ -360,6 +360,11 @@ if __name__ == '__main__':
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
 
+    args.num_rounds = 1
+    args.num_episodes = 100
+
+    time_start = time.time()
+
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
         value_net = build_value_net(value_net_layers)
@@ -382,3 +387,9 @@ if __name__ == '__main__':
             else:
                 torch.save(policy_net.state_dict(), args.save_policy)
             print('Policy saved to ' + args.save_policy)
+
+    time_end = time.time()
+
+    time_taken = time_end - time_start
+
+    print('Taken: {}'.format(time_taken))
