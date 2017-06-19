@@ -355,8 +355,8 @@ if __name__ == '__main__':
     elif args.game == 'hunters':
         import hunters as game
         k, m = 6, 6
-        policy_net_layers = [3*(k+m) + 9, 128, 9]
-        value_net_layers = [3*(k+m), 64, 1]
+        policy_net_layers = [3*(k+m) + 9, 256, 9]
+        value_net_layers = [3*(k+m), 128, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
