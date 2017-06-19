@@ -354,12 +354,12 @@ if __name__ == '__main__':
         game.set_options({'grid_z': 6, 'grid_y': 6, 'grid_x': 6})
     elif args.game == 'hunters':
         import hunters as game
-        k, m = 6, 6
+        k, m = 15, 15
         policy_net_layers = [3*(k+m) + 9, 128, 9]
         value_net_layers = [3*(k+m), 64, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
-                          'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
+                          'end_when_capture': None, 'k': k, 'm': m, 'n': 15})
 
     args.num_rounds = 10
     args.num_episodes = 10000
