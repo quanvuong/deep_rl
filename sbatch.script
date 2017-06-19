@@ -1,0 +1,16 @@
+#!/bin/bash -l
+#SBATCH --job-name=
+#SBATCH --output=output.slurm
+#SBATCH --error=error.slurm
+
+#SBATCH --time=00
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=10000mb
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=qhv200@nyu.edu
+#SBATCH --gres=gpu:1
+#SBATCH --partition=debug
+#SBATCH --share
+
+source activate
+python policy_gradient_lstm.py

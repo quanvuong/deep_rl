@@ -334,6 +334,7 @@ if __name__ == '__main__':
 
     # Transparently set number of threads based on environment variables
     num_threads = int(os.getenv('OMP_NUM_THREADS', 1))
+    print('num_threads', num_threads)
     torch.set_num_threads(num_threads)
 
     # Define wrappers for Tensors
