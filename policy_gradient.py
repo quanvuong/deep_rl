@@ -361,8 +361,8 @@ if __name__ == '__main__':
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
 
-    args.num_rounds = 10
-    args.num_episodes = 10000
+    args.num_rounds = 1
+    args.num_episodes = 100
 
     time_start = time.time()
 
