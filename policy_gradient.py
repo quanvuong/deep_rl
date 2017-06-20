@@ -362,7 +362,7 @@ if __name__ == '__main__':
                           'end_when_capture': None, 'k': k, 'm': m, 'n': 15})
 
     args.num_rounds = 1
-    args.num_episodes = 1000
+    args.num_episodes = 100
 
     time_start = time.time()
     timesteps_taken = 0
