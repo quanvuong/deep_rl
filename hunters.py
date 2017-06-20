@@ -20,7 +20,7 @@
 '''
 
 import numpy as np
-
+import sys
 
 class GameOptions(object):
 
@@ -44,8 +44,8 @@ class RabbitHunter(object):
     ]
 
     def __init__(self, options):
-        self.set_options(options)
         self.initial_options = options
+        self.set_options(options)
         self.agent_rep_size = 3
         print(options.__dict__)
 
@@ -60,7 +60,6 @@ class RabbitHunter(object):
         self.num_active_rabbits = options.num_rabbits
 
         self.num_agents = self.num_hunters + self.num_rabbits
-        self.num_active_agents = self.num_active_hunters + self.num_active_rabbits
 
         self.grid_size = options.grid_size
         self.timestep_reward = options.timestep_reward
@@ -106,7 +105,7 @@ class RabbitHunter(object):
 
         # Remove rabbits (and optionally hunters) that overlap
         reward = self.timestep_reward
-        rabbit_pos = state[self.num_active_hunters * 3:]
+        rabbit_pos = np.array(state[self.num_active_hunters * 3:])
 
         captured_rabbit_idxes = []
         inactive_hunter_idxes = []
@@ -123,10 +122,20 @@ class RabbitHunter(object):
                     hunter_pos[i:i + 3] = [0, -1, -1]
                     inactive_hunter_idxes += [i, i + 1, i + 2]
 
+        # print('Before')
+        # print('rabbit_pos', rabbit_pos)
+        # print('hunter_pos', hunter_pos)
+        # sys.stdout.flush()
         rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
         hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
         self.num_active_hunters -= int(len(inactive_hunter_idxes) / 3)
         self.num_active_rabbits -= int(len(captured_rabbit_idxes) / 3)
+
+        # print('After')
+        # print('rabbit_pos', rabbit_pos)
+        # print('hunter_pos', hunter_pos)
+        # print('\n')
+        # sys.stdout.flush()
 
         # Return (s_next, reward)
         s_next = np.concatenate((hunter_pos, rabbit_pos))
