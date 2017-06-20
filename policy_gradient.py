@@ -355,8 +355,8 @@ if __name__ == '__main__':
     elif args.game == 'hunters':
         import hunters as game
         k, m = 6, 6
-        policy_net_layers = [3*(k+m) + 9, 256, 9]
-        value_net_layers = [3*(k+m), 128, 1]
+        policy_net_layers = [3*(k+m) + 9, 384, 9]
+        value_net_layers = [3*(k+m), 192, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
@@ -365,6 +365,7 @@ if __name__ == '__main__':
     args.num_episodes = 100
 
     time_start = time.time()
+    timestep_taken = 0
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
@@ -375,6 +376,7 @@ if __name__ == '__main__':
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
             episode = run_episode(policy_net, gamma=args.gamma)
+            timestep_taken += len(episode)
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
             avg_return = 0.9 * avg_return + 0.1 * episode[0].G
@@ -394,3 +396,4 @@ if __name__ == '__main__':
     time_taken = time_end - time_start
 
     print('Taken: {}'.format(time_taken))
+    print('Timestep taken: {}'.format(timestep_taken))
