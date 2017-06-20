@@ -316,7 +316,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs multi-agent policy gradient.')
     parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
     parser.add_argument('--cuda', default=False, action='store_true', help='Include to run on CUDA')
-    parser.add_argument('--max_episode_len', default=100.0, type=float, help='Terminate episode early at this number of steps')
+    parser.add_argument('--max_episode_len', default=1000000.0, type=float, help='Terminate episode early at this number of steps')
     parser.add_argument('--max_len_penalty', default=0, type=float, help='If episode is terminated early, add this to the last reward')
     parser.add_argument('--num_episodes', default=100000, type=int, help='Number of episodes to run in a round of training')
     parser.add_argument('--num_rounds', default=1, type=int, help='How many rounds of training to run')
@@ -361,10 +361,11 @@ if __name__ == '__main__':
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
 
-    args.num_rounds = 10
-    args.num_episodes = 10000
+    args.num_rounds = 1
+    args.num_episodes = 1000
 
     time_start = time.time()
+    timesteps_taken = 0
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
@@ -375,6 +376,7 @@ if __name__ == '__main__':
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
             episode = run_episode(policy_net, gamma=args.gamma)
+            timesteps_taken += len(episode)
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
             avg_return = 0.9 * avg_return + 0.1 * episode[0].G
@@ -394,3 +396,4 @@ if __name__ == '__main__':
     time_taken = time_end - time_start
 
     print('Taken: {}'.format(time_taken))
+    print('Timestep taken: {}'.format(timesteps_taken))
