@@ -77,6 +77,9 @@ class RabbitHunter(object):
         start = np.random.randint(0, self.grid_size, size=3 * self.num_hunters + 3 * self.num_rabbits)
         start[::3] = 1
 
+        # Test hypothesis
+        # start = np.array([1, 7, 1, 1, 7, 6, 1, 6, 0, 1, 7, 5])
+
         return start
 
     def perform_action(self, state, a_indices):
@@ -84,6 +87,7 @@ class RabbitHunter(object):
            (s_next, reward)'''
         a = action_indices_to_coordinates(a_indices)
         # print(a)
+        # sys.stdout.flush()
 
         # Get positions after hunter and rabbit actions
         # a = np.concatenate((a, rabbit_a))
@@ -172,6 +176,42 @@ class RabbitHunter(object):
 
     def get_num_rabbits_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
+
+    def _get_poses_from_one_d_array(self, array):
+        positions = []
+        for idx in range(0, len(array), 3):
+            # +1 to skip the status
+            positions.append(array[idx+1: idx+3].tolist())
+        return positions
+
+    def render(self, state, outfile=sys.stdout):
+        hunter_poses = self._get_poses_from_one_d_array(state[:self.num_active_hunters * self.agent_rep_size])
+        rabbit_poses = self._get_poses_from_one_d_array(state[self.num_active_hunters * self.agent_rep_size:])
+
+        outfile.write('NEW STATE\n')
+
+        for row in range(self.grid_size):
+            draw = ''
+            for col in range(self.grid_size):
+                pos = [row, col]
+
+                num_h_here = hunter_poses.count(pos)
+                for _ in range(num_h_here):
+                    draw += 'h'
+
+                num_r_here = rabbit_poses.count(pos)
+                for _ in range(num_r_here):
+                    draw += 'r'
+
+                if num_h_here is 0 and num_r_here is 0:
+                    draw += '_'
+
+                draw += '\t'
+
+            draw += '\n\n'
+            outfile.write(draw)
+
+        outfile.write('\n')
 
 
 def action_indices_to_coordinates(a_indices):
