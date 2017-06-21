@@ -44,6 +44,47 @@ timestep_reward = -1
 # end_when_capture ends the game when a given number of rabbits is caught
 end_when_capture = None
 
+
+def active_agent_poses_from_agent_state(state):
+    poses = []
+
+    for idx in range(0, len(state), 3):
+        if state[idx] == 0:
+            continue
+        poses.append(state[idx + 1: idx + 3].tolist())
+    return poses
+
+
+def render(state, outfile=sys.stdout):
+
+    hunter_poses = active_agent_poses_from_agent_state(state[:k * 3])
+    rabbit_poses = active_agent_poses_from_agent_state(state[k * 3:])
+
+    for row in range(n):
+        draw = ''
+        for col in range(n):
+            pos = [row, col]
+            empty = True
+
+            num_h_here = hunter_poses.count(pos)
+            for _ in range(num_h_here):
+                draw += 'h'
+
+            num_r_here = rabbit_poses.count(pos)
+            for _ in range(num_r_here):
+                draw += 'r'
+
+            if num_h_here == 0 and num_r_here == 0:
+                draw += '_'
+
+            draw += '\t'
+
+        draw += '\n\n'
+        outfile.write(draw)
+
+    outfile.write('\n')
+    outfile.flush()
+
 def start_state(agents=None):
     '''Returns a random initial state. The state vector is a flat array of:
        concat(hunter positions, rabbit positions).'''
@@ -98,6 +139,29 @@ def fill_in_stay_action(s, a_indices):
 
     return new_a_indices
 
+def hunter_to_action(state, a_indices):
+    hunter_state = state[:k * 3]
+
+    for idx in range(0, len(hunter_state), 3):
+        hunter = int(idx / 3)
+        print(f'hunter: {hunter}, act: {a_indices[hunter]}', end='  ')
+        sys.stdout.flush()
+        print('status', hunter_state[idx])
+        sys.stdout.flush()
+    print('\n')
+
+
+def hunter_to_position(state):
+    hunter_state = state[:k * 3]
+    for idx in range(0, len(hunter_state), 3):
+        hunter = int(idx / 3)
+        print(f'hunter: {hunter}, pos: {state[idx + 1: idx + 3].tolist()}', end='  ')
+        sys.stdout.flush()
+        print('status', hunter_state[idx])
+        sys.stdout.flush()
+    print('\n')
+
+
 def perform_action(s, a_indices):
     '''Performs an action given by a_indices in state s. Returns:
        (s_next, reward). 
@@ -108,6 +172,8 @@ def perform_action(s, a_indices):
     # Validate inputs
     global num_active_hunters
     a_indices = fill_in_stay_action(s, a_indices)
+    # hunter_to_action(s, a_indices)
+    # hunter_to_position(s)
     a = action_indices_to_coordinates(a_indices)
     assert valid_state(s)
     assert valid_action(a)
@@ -359,3 +425,4 @@ def opposite_direction(s, a, i):
 
     # # Calculate opposite direction
     # return np.sign(rabbit - closest_hunter)
+
