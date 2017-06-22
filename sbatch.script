@@ -1,0 +1,20 @@
+#!/bin/bash -l
+#SBATCH --job-name=1h1r_but_state_is_6h6r_6x6_experiment
+#SBATCH --output=output.slurm
+#SBATCH --error=error.slurm
+
+#SBATCH --time=00
+#SBATCH --nodes=1
+#SBATCH --cpus-per-task=5
+#SBATCH --mem=100000mb
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=qhv200@nyu.edu
+#SBATCH --partition=aquila
+#SBATCH --share
+
+source deactivate
+source activate pytorch_cpu_py27
+python policy_gradient.py --game hunters
+git add graphs
+git commit -m 'add graphs'
+git push origin 1h1r_but_state_is_6h6r_6x6_experiment

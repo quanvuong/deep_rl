@@ -20,6 +20,7 @@
 '''
 
 import numpy as np
+import random
 
 n = 6  # grid size
 k = 2  # hunters
@@ -43,15 +44,29 @@ def start_state(agents=None):
     '''Returns a random initial state. The state vector is a flat array of:
        concat(hunter positions, rabbit positions).'''
     # Initialize random positions for hunters and rabbits
-    start = np.random.randint(0, n, size=3*k+3*m)
-    start[::3] = 1
+    start = [0, -1, -1] * (k + m)
 
-    # Reduce number of hunters & rabbits to agents, if specified
-    if agents is not None:
-        for h in range(3*agents, 3*k, 3):
-            start[h:h+3] = [0, -1, -1]
-        for r in range(3*k + 3*agents, 3*k+3*m, 3):
-            start[r:r+3] = [0, -1, -1]
+    # Only one active hunter and rabbit
+
+    # Pick hunter
+    active_hunter = random.randint(0, k - 1)
+    active_h_y = random.randint(0, n - 1)
+    active_h_x = random.randint(0, n - 1)
+    start[active_hunter * 3] = 1
+    start[active_hunter * 3 + 1] = active_h_y
+    start[active_hunter * 3 + 2] = active_h_x
+
+    # Pick rabbit
+    active_rabbit = random.randint(0, m - 1)
+    active_r_idx = k * 3 + active_rabbit * 3
+    active_r_y = random.randint(0, n - 1)
+    active_r_x = random.randint(0, n - 1)
+    start[active_r_idx] = 1
+    start[active_r_idx + 1] = active_r_y
+    start[active_r_idx + 2] = active_r_x
+
+    start = np.array(start)
+    print(start)
 
     return start
 

@@ -316,9 +316,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs multi-agent policy gradient.')
     parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
     parser.add_argument('--cuda', default=False, action='store_true', help='Include to run on CUDA')
-    parser.add_argument('--max_episode_len', default=float('inf'), type=float, help='Terminate episode early at this number of steps')
-    parser.add_argument('--max_len_penalty', default=0, type=float, help='If episode is terminated early, add this to the last reward')
-    parser.add_argument('--num_episodes', default=100000, type=int, help='Number of episodes to run in a round of training')
+    parser.add_argument('--max_episode_len', default=100, type=float, help='Terminate episode early at this number of steps')
+    parser.add_argument('--max_len_penalty', default=-100, type=float, help='If episode is terminated early, add this to the last reward')
+    parser.add_argument('--num_episodes', default=1000000, type=int, help='Number of episodes to run in a round of training')
     parser.add_argument('--num_rounds', default=1, type=int, help='How many rounds of training to run')
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
     parser.add_argument('--gamma', default=1, type=float, help='Global discount factor for Monte-Carlo and TD returns')
@@ -337,9 +337,17 @@ if __name__ == '__main__':
     torch.set_num_threads(num_threads)
 
     # Define wrappers for Tensors
-    FloatTensor = lambda x: torch.cuda.FloatTensor(x) if cuda else torch.FloatTensor(x)
+    def FloatTensor(x):
+        if isinstance(x, np.ndarray):
+            return torch.from_numpy(x).cuda().float() if cuda else torch.from_numpy(x).float()
+        return torch.cuda.FloatTensor(x) if cuda else torch.FloatTensor(x)
+
     ZeroTensor = lambda *s: torch.cuda.FloatTensor(*s).zero_() if cuda else torch.zeros(*s)
-    ByteTensor = lambda x: torch.cuda.ByteTensor(x) if cuda else torch.ByteTensor(x)
+
+    def ByteTensor(x):
+        if isinstance(x, np.ndarray):
+            return torch.cuda.ByteTensor(x) if cuda else torch.ByteTensor(x)
+        return torch.from_numpy(x).cuda().byte() if cuda else torch.from_numpy(x).byte()
 
     if args.game == 'gridworld':
         import gridworld as game
@@ -353,12 +361,12 @@ if __name__ == '__main__':
         game.set_options({'grid_z': 6, 'grid_y': 6, 'grid_x': 6})
     elif args.game == 'hunters':
         import hunters as game
-        k, m = 5, 5
+        k, m = 6, 6
         policy_net_layers = [3*(k+m) + 9, 128, 9]
         value_net_layers = [3*(k+m), 64, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
-                          'end_when_capture': 3, 'k': k, 'm': m, 'n': 6})
+                          'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
 
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
