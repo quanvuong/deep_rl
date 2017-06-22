@@ -66,7 +66,6 @@ def start_state(agents=None):
     start[active_r_idx + 2] = active_r_x
 
     start = np.array(start)
-    print(start)
 
     return start
 
