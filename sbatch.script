@@ -14,7 +14,7 @@
 
 source deactivate
 source activate pytorch_cpu_py27
-python policy_gradient.py --game hunters
+python policy_gradient.py --game hunters --save_policy saved_policy_1h1r_but_state_is_6h6r_6x6_experiment
 git add graphs
 git commit -m 'add graphs'
 git push origin 1h1r_but_state_is_6h6r_6x6_experiment
