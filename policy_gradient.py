@@ -318,7 +318,7 @@ if __name__ == '__main__':
     parser.add_argument('--cuda', default=False, action='store_true', help='Include to run on CUDA')
     parser.add_argument('--max_episode_len', default=1000, type=float, help='Terminate episode early at this number of steps')
     parser.add_argument('--max_len_penalty', default=-100, type=float, help='If episode is terminated early, add this to the last reward')
-    parser.add_argument('--num_episodes', default=1000000, type=int, help='Number of episodes to run in a round of training')
+    parser.add_argument('--num_episodes', default=500000, type=int, help='Number of episodes to run in a round of training')
     parser.add_argument('--num_rounds', default=1, type=int, help='How many rounds of training to run')
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
     parser.add_argument('--gamma', default=0.8, type=float, help='Global discount factor for Monte-Carlo and TD returns')
