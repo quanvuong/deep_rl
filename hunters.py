@@ -1,26 +1,7 @@
-'''
-    This is a multi-agent learning task, where k hunters (agents) are trying to
-    catch m rabbits in an nxn grid.
-
-    Hunters and rabbits are initialized randomly on the grid, with overlaps.
-    An episode ends when all rabbits have been captured. Rabbits can have
-    different movement patterns. There is a reward of -1 per time step (and
-    optionally a +1 reward on capturing a rabbit).
-
-    States are size 3*k+3*m flattened arrays of:
-      concat(hunter positions, rabbit positions)
-    Positions are of the form:
-      [in-game, y-position, x-position], so
-      [1, 0, 0] = top-left, [1, 0, n-1] = top-right, [0, -1, -1] = removed
-
-    Actions are size 2*k flattened arrays of:
-      concat(hunter 1 movement, hunter 2 movement, ..., hunter k movement)
-    Movements are of the form:
-      [0, 1] = right, [-1, 1] = up-right, [0, 0] = stay, etc
-'''
-
 import numpy as np
 import sys
+import random
+
 
 class GameOptions(object):
 
@@ -71,20 +52,23 @@ class RabbitHunter(object):
         return 6
 
     def start_state(self):
-        '''Returns a random initial state. The state vector is a flat array of:
-           concat(hunter positions, rabbit positions).'''
+        """Returns a random initial state. The state vector is a flat array of:
+           concat(hunter positions, rabbit positions). Do not allow for overlapping hunters and rabbits."""
 
-        start = np.random.randint(0, self.grid_size, size=3 * self.num_hunters + 3 * self.num_rabbits)
-        start[::3] = 1
+        # 1 for active status
+        possible_poses = [(1, i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
 
-        # Test hypothesis
-        # start = np.array([1, 7, 1, 1, 7, 6, 1, 6, 0, 1, 7, 5])
+        rabbit_poses = random.choices(possible_poses, k=self.num_rabbits)
 
-        return start
+        possible_poses = [pos for pos in possible_poses if pos not in rabbit_poses]
+
+        hunter_poses = random.choices(possible_poses, k=self.num_hunters)
+
+        return np.array(hunter_poses + rabbit_poses).reshape(-1)
 
     def perform_action(self, state, a_indices):
-        '''Performs an action given by a_indices in state s. Returns:
-           (s_next, reward)'''
+        """Performs an action given by a_indices in state s. Returns:
+           (s_next, reward)"""
         a = action_indices_to_coordinates(a_indices)
         # print(a)
         # sys.stdout.flush()
@@ -147,9 +131,9 @@ class RabbitHunter(object):
         return s_next, reward
 
     def filter_actions(self, state, agent_no):
-        '''Filter the actions available for an agent in a given state. Returns a
+        """Filter the actions available for an agent in a given state. Returns a
            bitmap of available actions. Hunter should be active.
-           E.g. an agent in a corner is not allowed to move into a wall.'''
+           E.g. an agent in a corner is not allowed to move into a wall."""
         avail_a = np.ones(9, dtype=int)
         hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
 
@@ -162,7 +146,7 @@ class RabbitHunter(object):
         return avail_a
 
     def is_end(self, state):
-        '''Given a state, return if the game should end.'''
+        """Given a state, return if the game should end."""
         if len(state) == 0:
             return True
         if self.end_when_capture is not None:
@@ -176,6 +160,20 @@ class RabbitHunter(object):
 
     def get_num_rabbits_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
+
+    def get_hunters_state_from_state(self, state):
+        return state[:self.num_active_hunters * self.agent_rep_size]
+
+    def get_rabbits_state_from_state(self, state):
+        return state[self.num_active_hunters * self.agent_rep_size:]
+
+    def get_hunters_from_state(self, state):
+        hunters_state = self.get_hunters_state_from_state(state)
+        return np.split(hunters_state, self.num_active_hunters)
+
+    def get_rabbits_from_state(self, state):
+        rabbits_state = self.get_rabbits_state_from_state(state)
+        return np.split(rabbits_state, self.num_active_rabbits)
 
     def _get_poses_from_one_d_array(self, array):
         positions = []
@@ -215,21 +213,21 @@ class RabbitHunter(object):
 
 
 def action_indices_to_coordinates(a_indices):
-    '''Converts a list of action indices to action coordinates.'''
+    """Converts a list of action indices to action coordinates."""
     coords = [RabbitHunter.action_space[i] for i in a_indices]
     return np.concatenate(coords)
 
 def array_equal(a, b):
-    '''Because np.array_equal() is too slow. Three-element arrays only.'''
+    """Because np.array_equal() is too slow. Three-element arrays only."""
     return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
 
 # def valid_state(s):
-#     '''Returns if the given state vector is valid.'''
+#     """Returns if the given state vector is valid."""
 #     return s.shape == (3*k+3*m, ) and \
 #            np.all([-1 <= e < n for e in s]) and \
 #            np.all([e in (0, 1) for e in s[::3]])
 
 # def valid_action(a):
-#     '''Returns if the given action vector is valid'''
+#     """Returns if the given action vector is valid"""
 #     return a.shape == (2*k, ) and np.all([-1 <= e <= 1 for e in a])
 
