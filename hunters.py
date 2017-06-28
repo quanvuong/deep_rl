@@ -110,20 +110,10 @@ class RabbitHunter(object):
                     hunter_pos[i:i + 3] = [0, -1, -1]
                     inactive_hunter_idxes += [i, i + 1, i + 2]
 
-        # print('Before')
-        # print('rabbit_pos', rabbit_pos)
-        # print('hunter_pos', hunter_pos)
-        # sys.stdout.flush()
         rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
         hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
         self.num_active_hunters -= int(len(inactive_hunter_idxes) / 3)
         self.num_active_rabbits -= int(len(captured_rabbit_idxes) / 3)
-
-        # print('After')
-        # print('rabbit_pos', rabbit_pos)
-        # print('hunter_pos', hunter_pos)
-        # print('\n')
-        # sys.stdout.flush()
 
         # Return (s_next, reward)
         s_next = np.concatenate((hunter_pos, rabbit_pos))
