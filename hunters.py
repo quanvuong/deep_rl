@@ -56,7 +56,7 @@ class RabbitHunter(object):
            concat(hunter positions, rabbit positions). Do not allow for overlapping hunters and rabbits."""
 
         # 1 for active status
-        possible_poses = [(1, i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
+        possible_poses = [(1, i, j) for i in range(1, self.grid_size+1) for j in range(1, self.grid_size+1)]
 
         rabbit_poses = random.choices(possible_poses, k=self.num_rabbits)
 
@@ -188,9 +188,9 @@ class RabbitHunter(object):
 
         outfile.write('NEW STATE\n')
 
-        for row in range(self.grid_size):
+        for row in range(1, self.grid_size+1):
             draw = ''
-            for col in range(self.grid_size):
+            for col in range(1, self.grid_size+1):
                 pos = [row, col]
 
                 num_h_here = hunter_poses.count(pos)
