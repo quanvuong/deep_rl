@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 import random
+import os
 
 
 class GameOptions(object):
@@ -28,7 +29,8 @@ class RabbitHunter(object):
         self.initial_options = options
         self.set_options(options)
         self.agent_rep_size = 3
-        print(options.__dict__)
+        print(f'pid: {os.getpid()}, options.__dict__')
+        sys.stdout.flush()
 
     def reset(self):
         self.set_options(self.initial_options)
