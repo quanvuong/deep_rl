@@ -29,7 +29,7 @@ class RabbitHunter(object):
         self.initial_options = options
         self.set_options(options)
         self.agent_rep_size = 3
-        print(f'pid: {os.getpid()}, options.__dict__')
+        print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
     def reset(self):
