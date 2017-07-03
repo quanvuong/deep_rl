@@ -164,18 +164,18 @@ class RabbitHunter(object):
         return int(state_size / self.agent_rep_size / 2)
 
     def get_hunters_state_from_state(self, state):
-        return state[:self.num_active_hunters * self.agent_rep_size]
+        return state[:self.get_num_hunters_from_state_size(len(state)) * self.agent_rep_size]
 
     def get_rabbits_state_from_state(self, state):
-        return state[self.num_active_hunters * self.agent_rep_size:]
+        return state[self.get_num_hunters_from_state_size(len(state)) * self.agent_rep_size:]
 
     def get_hunters_from_state(self, state):
         hunters_state = self.get_hunters_state_from_state(state)
-        return np.split(hunters_state, self.num_active_hunters)
+        return np.split(hunters_state, self.get_num_hunters_from_state_size(len(state)))
 
     def get_rabbits_from_state(self, state):
         rabbits_state = self.get_rabbits_state_from_state(state)
-        return np.split(rabbits_state, self.num_active_rabbits)
+        return np.split(rabbits_state, self.get_num_rabbits_from_state_size(len(state)))
 
     def _get_poses_from_one_d_array(self, array):
         positions = []
