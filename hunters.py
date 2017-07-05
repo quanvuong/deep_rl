@@ -18,6 +18,32 @@ class GameOptions(object):
 
 
 class RabbitHunter(object):
+    """
+        This is a multi-agent learning task, where hunters (agents) are trying to
+        catch rabbits in an nxn grid.
+        Hunters and rabbits are initialized randomly on the grid.
+        An episode ends when all rabbits have been captured.
+        There is a reward of +1 reward on capturing a rabbit.
+        States are size 3*num_hunters + 3*num_rabbits flattened arrays of:
+          concat(hunter states, rabbit states)
+        States are of the form:
+          [in-game, y-position, x-position], so
+          [1, 0, 0] = top-left, [1, 0, n-1] = top-right, [0, -1, -1] = removed
+        Actions are size 2*k flattened arrays of:
+          concat(hunter 1 movement, hunter 2 movement, ..., hunter k movement)
+        Movements are of the form:
+          [0, 1] = right, [-1, 1] = up-right, [0, 0] = stay, etc.
+          
+        The public functions are:
+        
+        reset(): reset the setting of the environment 
+        set_options(options): set options for environment. options should be a GameOptions object.
+        start_state(): retrieve a starting state
+        perform_action(state, act_indices): perform an action given a state. Return next state and reward. 
+        filter_actions(state, agent_number): determine the possible actions for an agent given a state. 
+        is_end(state): given a state, determine if the game should end.
+        render(state): given a state, render the state as a grid (useful for debugging purpose) 
+    """
 
     action_space = [
         np.array([-1, -1]), np.array([-1, 0]), np.array([-1, 1]),
