@@ -73,11 +73,8 @@ class RabbitHunter(object):
         """Performs an action given by a_indices in state s. Returns:
            (s_next, reward)"""
         a = action_indices_to_coordinates(a_indices)
-        # print(a)
-        # sys.stdout.flush()
 
         # Get positions after hunter and rabbit actions
-        # a = np.concatenate((a, rabbit_a))
         hunter_pos = np.zeros(self.num_active_hunters * 3, dtype=np.int)
         for hunter in range(0, self.num_active_hunters):
             hunter_idx = hunter * 3
@@ -86,12 +83,8 @@ class RabbitHunter(object):
             else:
                 hunter_pos[hunter_idx] = 1
                 hunter_act = a[hunter_idx - hunter:hunter_idx - hunter + 2]
-                # print(hunter_act)
                 sa = state[hunter_idx + 1:hunter_idx + 3] + hunter_act
-                # print(sa)
                 clipped = np.clip(sa, 0, self.grid_size - 1)
-                # print(clipped)
-                # print(hunter_pos[hunter_idx + 1:hunter_idx + 3])
                 hunter_pos[hunter_idx + 1:hunter_idx + 3] = clipped
 
         # Remove rabbits (and optionally hunters) that overlap
@@ -113,22 +106,11 @@ class RabbitHunter(object):
                     hunter_pos[i:i + 3] = [0, -1, -1]
                     inactive_hunter_idxes += [i, i + 1, i + 2]
 
-        # print('Before')
-        # print('rabbit_pos', rabbit_pos)
-        # print('hunter_pos', hunter_pos)
-        # sys.stdout.flush()
         rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
         hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
         self.num_active_hunters -= int(len(inactive_hunter_idxes) / 3)
         self.num_active_rabbits -= int(len(captured_rabbit_idxes) / 3)
 
-        # print('After')
-        # print('rabbit_pos', rabbit_pos)
-        # print('hunter_pos', hunter_pos)
-        # print('\n')
-        # sys.stdout.flush()
-
-        # Return (s_next, reward)
         s_next = np.concatenate((hunter_pos, rabbit_pos))
 
         return s_next, reward
