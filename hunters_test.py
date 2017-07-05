@@ -20,8 +20,8 @@ class HunterTest(unittest.TestCase):
         # Naive test of 10 random initial start_state
         for _ in range(10):
             start_state = self.game.start_state()
-            hunters = self.game.get_hunters_from_state(start_state)
-            rabbits = self.game.get_rabbits_from_state(start_state)
+            hunters = self.game._get_hunters_from_state(start_state)
+            rabbits = self.game._get_rabbits_from_state(start_state)
 
             for hunter in hunters:
                 for rabbit in rabbits:
