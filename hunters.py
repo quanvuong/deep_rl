@@ -135,35 +135,35 @@ class RabbitHunter(object):
         if len(state) == 0:
             return True
         if self.end_when_capture is not None:
-            num_rabbits_remaining = self.get_num_rabbits_from_state_size(len(state))
+            num_rabbits_remaining = self._get_num_rabbits_from_state_size(len(state))
             if (self.num_rabbits - num_rabbits_remaining) >= self.end_when_capture:
                 return True
         return False
 
-    def get_num_hunters_from_state_size(self, state_size):
+    def _get_num_hunters_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
 
-    def get_num_rabbits_from_state_size(self, state_size):
+    def _get_num_rabbits_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
 
-    def get_hunters_state_from_state(self, state):
-        return state[:self.get_num_hunters_from_state_size(len(state)) * self.agent_rep_size]
+    def _get_hunters_state_from_state(self, state):
+        return state[:self._get_num_hunters_from_state_size(len(state)) * self.agent_rep_size]
 
-    def get_rabbits_state_from_state(self, state):
-        return state[self.get_num_hunters_from_state_size(len(state)) * self.agent_rep_size:]
+    def _get_rabbits_state_from_state(self, state):
+        return state[self._get_num_hunters_from_state_size(len(state)) * self.agent_rep_size:]
 
-    def get_hunters_from_state(self, state):
-        hunters_state = self.get_hunters_state_from_state(state)
-        return np.split(hunters_state, self.get_num_hunters_from_state_size(len(state)))
+    def _get_hunters_from_state(self, state):
+        hunters_state = self._get_hunters_state_from_state(state)
+        return np.split(hunters_state, self._get_num_hunters_from_state_size(len(state)))
 
-    def get_rabbits_from_state(self, state):
-        rabbits_state = self.get_rabbits_state_from_state(state)
-        return np.split(rabbits_state, self.get_num_rabbits_from_state_size(len(state)))
+    def _get_rabbits_from_state(self, state):
+        rabbits_state = self._get_rabbits_state_from_state(state)
+        return np.split(rabbits_state, self._get_num_rabbits_from_state_size(len(state)))
 
     def _get_poses_from_one_d_array(self, array):
         positions = []
         for idx in range(0, len(array), 3):
-            # +1 to skip the status
+            # +1 to skip the status number
             positions.append(array[idx+1: idx+3].tolist())
         return positions
 
@@ -171,7 +171,7 @@ class RabbitHunter(object):
         hunter_poses = self._get_poses_from_one_d_array(state[:self.num_active_hunters * self.agent_rep_size])
         rabbit_poses = self._get_poses_from_one_d_array(state[self.num_active_hunters * self.agent_rep_size:])
 
-        outfile.write('NEW STATE\n')
+        outfile.write(f'Rendering state: {state}')
 
         for row in range(self.grid_size):
             draw = ''
