@@ -51,7 +51,8 @@ class RabbitHunter(object):
         self.end_when_capture = options.end_when_capture
 
     def get_min_state_size(self):
-        return 6
+        # 2 because there must be at least one hunter and one rabbit
+        return self.agent_rep_size * 2
 
     def start_state(self):
         """Returns a random initial state. The state vector is a flat array of:
