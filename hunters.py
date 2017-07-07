@@ -214,7 +214,7 @@ class RabbitHunter(object):
         hunter_poses = self._get_poses_from_one_d_array(state[:self.num_active_hunters * self.agent_rep_size])
         rabbit_poses = self._get_poses_from_one_d_array(state[self.num_active_hunters * self.agent_rep_size:])
 
-        outfile.write(f'Rendering state: {state}')
+        outfile.write(f'Rendering state: {state}\n')
 
         for row in range(self.grid_size):
             draw = ''
