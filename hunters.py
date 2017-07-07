@@ -71,7 +71,7 @@ class RabbitHunter(object):
     def __init__(self, options):
         self.initial_options = options
         self.set_options(options)
-        self.agent_rep_size = 3
+        self.agent_rep_size = 2
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
@@ -101,8 +101,7 @@ class RabbitHunter(object):
         """Returns a random initial state. The state vector is a flat array of:
            concat(hunter positions, rabbit positions). Do not allow for overlapping hunters and rabbits."""
 
-        # 1 for active status
-        possible_poses = [(1, i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
+        possible_poses = [(i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
 
         rabbit_poses = random.choices(possible_poses, k=self.num_rabbits)
 
@@ -118,43 +117,44 @@ class RabbitHunter(object):
         a = action_indices_to_coordinates(a_indices)
 
         # Get positions after hunter and rabbit actions
-        hunter_pos = np.zeros(self.num_active_hunters * 3, dtype=np.int)
+        hunter_pos = np.zeros(self.num_active_hunters * self.agent_rep_size, dtype=np.int)
         for hunter in range(0, self.num_active_hunters):
-            hunter_idx = hunter * 3
-            if state[hunter_idx] == 0:
-                hunter_pos[hunter_idx:hunter_idx + 3] = [0, -1, -1]
-            else:
-                hunter_pos[hunter_idx] = 1
-                hunter_act = a[hunter_idx - hunter:hunter_idx - hunter + 2]
-                sa = state[hunter_idx + 1:hunter_idx + 3] + hunter_act
-                clipped = np.clip(sa, 0, self.grid_size - 1)
-                hunter_pos[hunter_idx + 1:hunter_idx + 3] = clipped
+            hunter_idx = hunter * self.agent_rep_size
+            hunter_act = a[hunter_idx - hunter:hunter_idx - hunter + 2]
+            sa = state[hunter_idx:hunter_idx + 2] + hunter_act
+            clipped = np.clip(sa, 0, self.grid_size - 1)
+            hunter_pos[hunter_idx:hunter_idx + 2] = clipped
 
         # Remove rabbits (and optionally hunters) that overlap
         reward = self.timestep_reward
-        rabbit_pos = np.array(state[self.num_active_hunters * 3:])
+        rabbit_pos = np.array(state[self.num_active_hunters * self.agent_rep_size:])
 
         captured_rabbit_idxes = []
         inactive_hunter_idxes = []
-        for i in range(0, len(hunter_pos), 3):
-            hunter = hunter_pos[i:i + 3]
-            for j in range(0, len(rabbit_pos), 3):
-                rabbit = rabbit_pos[j:j + 3]
-                if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
+        for i in range(0, len(hunter_pos), self.agent_rep_size):
+            hunter = hunter_pos[i:i + self.agent_rep_size]
+            for j in range(0, len(rabbit_pos), self.agent_rep_size):
+                rabbit = rabbit_pos[j:j + self.agent_rep_size]
+                if array_equal(hunter, rabbit):
                     # A rabbit has been captured
                     # Remove captured rabbit and respective hunter
-                    rabbit_pos[j:j + 3] = [0, -1, -1]
-                    captured_rabbit_idxes += [j, j + 1, j + 2]
+                    rabbit_pos[j:j + self.agent_rep_size] = [-1, -1]
+                    captured_rabbit_idxes += [j, j + 1]
                     reward += self.capture_reward
-                    hunter_pos[i:i + 3] = [0, -1, -1]
-                    inactive_hunter_idxes += [i, i + 1, i + 2]
+                    hunter_pos[i:i + self.agent_rep_size] = [-1, -1]
+                    inactive_hunter_idxes += [i, i + 1]
+
+        # print('rabbit_pos before delete', rabbit_pos)
 
         rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
         hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
-        self.num_active_hunters -= int(len(inactive_hunter_idxes) / 3)
-        self.num_active_rabbits -= int(len(captured_rabbit_idxes) / 3)
+        self.num_active_hunters -= int(len(inactive_hunter_idxes) / self.agent_rep_size)
+        self.num_active_rabbits -= int(len(captured_rabbit_idxes) / self.agent_rep_size)
 
         s_next = np.concatenate((hunter_pos, rabbit_pos))
+
+        # print('hunter_pos', hunter_pos)
+        # print('rabbit_pos', rabbit_pos)
 
         return s_next, reward
 
@@ -163,7 +163,7 @@ class RabbitHunter(object):
            bitmap of available actions. Hunter should be active.
            E.g. an agent in a corner is not allowed to move into a wall."""
         avail_a = np.ones(9, dtype=int)
-        hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
+        hunter_pos = state[self.agent_rep_size * agent_no + 1:self.agent_rep_size * agent_no + self.agent_rep_size]
 
         for i in range(len(RabbitHunter.action_space)):
             # Check if action moves us off the grid
@@ -205,9 +205,8 @@ class RabbitHunter(object):
 
     def _get_poses_from_one_d_array(self, array):
         positions = []
-        for idx in range(0, len(array), 3):
-            # +1 to skip the status number
-            positions.append(array[idx+1: idx+3].tolist())
+        for idx in range(0, len(array), self.agent_rep_size):
+            positions.append(array[idx: idx+2].tolist())
         return positions
 
     def render(self, state, outfile=sys.stdout):
@@ -247,7 +246,7 @@ def action_indices_to_coordinates(a_indices):
 
 def array_equal(a, b):
     """Because np.array_equal() is too slow. Three-element arrays only."""
-    return a[0] == b[0] and a[1] == b[1] and a[2] == b[2]
+    return a[0] == b[0] and a[1] == b[1]
 
 # def valid_state(s):
 #     """Returns if the given state vector is valid."""
