@@ -72,6 +72,7 @@ class RabbitHunter(object):
         self.initial_options = options
         self.set_options(options)
         self.agent_rep_size = 3
+        self.state_size = self.num_agents * self.agent_rep_size
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
@@ -117,6 +118,8 @@ class RabbitHunter(object):
            (s_next, reward)"""
         a = action_indices_to_coordinates(a_indices)
 
+        reward = self.timestep_reward
+
         # Get positions after hunter and rabbit actions
         hunter_pos = np.zeros(self.num_active_hunters * 3, dtype=np.int)
         for hunter in range(0, self.num_active_hunters):
@@ -131,7 +134,6 @@ class RabbitHunter(object):
                 hunter_pos[hunter_idx + 1:hunter_idx + 3] = clipped
 
         # Remove rabbits (and optionally hunters) that overlap
-        reward = self.timestep_reward
         rabbit_pos = np.array(state[self.num_active_hunters * 3:])
 
         captured_rabbit_idxes = []
@@ -177,10 +179,6 @@ class RabbitHunter(object):
         """Given a state, return if the game should end."""
         if len(state) == 0:
             return True
-        if self.end_when_capture is not None:
-            num_rabbits_remaining = self._get_num_rabbits_from_state_size(len(state))
-            if (self.num_rabbits - num_rabbits_remaining) >= self.end_when_capture:
-                return True
         return False
 
     def _get_num_hunters_from_state_size(self, state_size):
@@ -211,10 +209,11 @@ class RabbitHunter(object):
         return positions
 
     def render(self, state, outfile=sys.stdout):
-        hunter_poses = self._get_poses_from_one_d_array(state[:self.num_active_hunters * self.agent_rep_size])
-        rabbit_poses = self._get_poses_from_one_d_array(state[self.num_active_hunters * self.agent_rep_size:])
+        num_hunter = self._get_num_hunters_from_state_size(len(state))
+        hunter_poses = self._get_poses_from_one_d_array(state[:num_hunter * self.agent_rep_size])
+        rabbit_poses = self._get_poses_from_one_d_array(state[num_hunter * self.agent_rep_size:])
 
-        outfile.write(f'Rendering state: {state}')
+        outfile.write(f'Rendering state: {state}\n')
 
         for row in range(self.grid_size):
             draw = ''
