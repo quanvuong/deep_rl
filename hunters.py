@@ -121,14 +121,11 @@ class RabbitHunter(object):
         hunter_pos = np.zeros(self.num_active_hunters * 3, dtype=np.int)
         for hunter in range(0, self.num_active_hunters):
             hunter_idx = hunter * 3
-            if state[hunter_idx] == 0:
-                hunter_pos[hunter_idx:hunter_idx + 3] = [0, -1, -1]
-            else:
-                hunter_pos[hunter_idx] = 1
-                hunter_act = a[hunter_idx - hunter:hunter_idx - hunter + 2]
-                sa = state[hunter_idx + 1:hunter_idx + 3] + hunter_act
-                clipped = np.clip(sa, 0, self.grid_size - 1)
-                hunter_pos[hunter_idx + 1:hunter_idx + 3] = clipped
+            hunter_pos[hunter_idx] = 1
+            hunter_act = a[hunter_idx - hunter:hunter_idx - hunter + 2]
+            sa = state[hunter_idx + 1:hunter_idx + 3] + hunter_act
+            clipped = np.clip(sa, 0, self.grid_size - 1)
+            hunter_pos[hunter_idx + 1:hunter_idx + 3] = clipped
 
         # Remove rabbits (and optionally hunters) that overlap
         reward = self.timestep_reward
