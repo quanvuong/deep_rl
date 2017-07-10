@@ -162,7 +162,7 @@ class RabbitHunter(object):
            
            Hunter should be active.
            E.g. an agent in a corner is not allowed to move into a wall."""
-        avail_a = np.zeros(9, dtype=np.uint8)
+        avail_a = [0] * 9
         hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
 
         for i in range(len(RabbitHunter.action_space)):
