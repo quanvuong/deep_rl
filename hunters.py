@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import random
 import os
-
+from itertools import chain
 
 class GameOptions(object):
 
@@ -63,9 +63,9 @@ class RabbitHunter(object):
     """
 
     action_space = [
-        np.array([-1, -1]), np.array([-1, 0]), np.array([-1, 1]),
-        np.array([0, -1]), np.array([0, 0]), np.array([0, 1]),
-        np.array([1, -1]), np.array([1, 0]), np.array([1, 1])
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 0], [0, 1],
+        [1, -1], [1, 0], [1, 1]
     ]
 
     def __init__(self, options):
@@ -80,10 +80,8 @@ class RabbitHunter(object):
 
     def set_options(self, options):
         self.num_hunters = options.num_hunters
-        self.num_active_hunters = options.num_hunters
 
         self.num_rabbits = options.num_rabbits
-        self.num_active_rabbits = options.num_rabbits
 
         self.num_agents = self.num_hunters + self.num_rabbits
 
@@ -110,50 +108,43 @@ class RabbitHunter(object):
 
         hunter_poses = random.choices(possible_poses, k=self.num_hunters)
 
-        return np.array(hunter_poses + rabbit_poses).reshape(-1)
+        return list(chain.from_iterable(hunter_poses + rabbit_poses))
 
-    def perform_action(self, state, a_indices):
+    def perform_action(self, state, num_hunters,  a_indices):
         """Performs an action given by a_indices in state s. Returns:
            (s_next, reward)"""
-        a = action_indices_to_coordinates(a_indices)
+        a = [RabbitHunter.action_space[i] for i in a_indices]
+        reward = self.timestep_reward
 
         # Get positions after hunter and rabbit actions
-        hunter_pos = np.zeros(self.num_active_hunters * 3, dtype=np.int)
-        for hunter in range(0, self.num_active_hunters):
+        # np.zeros(num_hunters * 3, dtype=np.int)
+        hunter_poses = []
+        for hunter in range(0, num_hunters):
             hunter_idx = hunter * 3
-            hunter_pos[hunter_idx] = 1
-            hunter_act = a[hunter_idx - hunter:hunter_idx - hunter + 2]
-            sa = state[hunter_idx + 1:hunter_idx + 3] + hunter_act
-            clipped = np.clip(sa, 0, self.grid_size - 1)
-            hunter_pos[hunter_idx + 1:hunter_idx + 3] = clipped
+            hunter_act = a[hunter]
+            hunter_poses.append([state[hunter_idx + 1] + hunter_act[0], state[hunter_idx + 2] + hunter_act[1]])
 
-        # Remove rabbits (and optionally hunters) that overlap
-        reward = self.timestep_reward
-        rabbit_pos = np.array(state[self.num_active_hunters * 3:])
+        # Must be int here to be valid list index
+        rabbit_start_at = int(len(state) / 2)
+        active_rabbit_poses = []
+        # Assume num_hunters = num_rabbits
+        for rabbit in range(0, num_hunters):
+            rabbit_idx = rabbit_start_at + rabbit * 3
+            r_pos = [state[rabbit_idx + 1], state[rabbit_idx + 2]]
+            try:
+                hunter_poses.remove(r_pos)
+                reward += self.capture_reward
+            except ValueError:
+                active_rabbit_poses.append(r_pos)
 
-        captured_rabbit_idxes = []
-        inactive_hunter_idxes = []
-        for i in range(0, len(hunter_pos), 3):
-            hunter = hunter_pos[i:i + 3]
-            for j in range(0, len(rabbit_pos), 3):
-                rabbit = rabbit_pos[j:j + 3]
-                if hunter[0] == 1 and rabbit[0] == 1 and array_equal(hunter, rabbit):
-                    # A rabbit has been captured
-                    # Remove captured rabbit and respective hunter
-                    rabbit_pos[j:j + 3] = [0, -1, -1]
-                    captured_rabbit_idxes += [j, j + 1, j + 2]
-                    reward += self.capture_reward
-                    hunter_pos[i:i + 3] = [0, -1, -1]
-                    inactive_hunter_idxes += [i, i + 1, i + 2]
+        hunters = [[1] + pos for pos in hunter_poses]
+        rabbits = [[1] + pos for pos in active_rabbit_poses]
 
-        rabbit_pos = np.delete(rabbit_pos, captured_rabbit_idxes, axis=0)
-        hunter_pos = np.delete(hunter_pos, inactive_hunter_idxes, axis=0)
-        self.num_active_hunters -= int(len(inactive_hunter_idxes) / 3)
-        self.num_active_rabbits -= int(len(captured_rabbit_idxes) / 3)
+        return list(chain.from_iterable(hunters + rabbits)), reward
 
-        s_next = np.concatenate((hunter_pos, rabbit_pos))
-
-        return s_next, reward
+    def _out_of_grid(self, value):
+        if value < 0 or value >= self.grid_size:
+            return True
 
     def filter_invalid_acts(self, state, agent_no):
         """Filter the actions available for an agent in a given state. Returns a
@@ -162,15 +153,19 @@ class RabbitHunter(object):
            
            Hunter should be active.
            E.g. an agent in a corner is not allowed to move into a wall."""
-        avail_a = [0] * 9
+        action_size = len(RabbitHunter.action_space)
+        avail_a = [0] * action_size
         hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
 
-        for i in range(len(RabbitHunter.action_space)):
+        for i in range(action_size):
             # Check if action moves us off the grid
             a = RabbitHunter.action_space[i]
-            sa = hunter_pos + a
-            # Action moves us off the grid
-            if (sa[0] < 0 or sa[0] >= self.grid_size) or (sa[1] < 0 or sa[1] >= self.grid_size):
+            new_y = hunter_pos[0] + a[0]
+            if self._out_of_grid(new_y):
+                avail_a[i] = 1
+                continue
+            new_x = hunter_pos[1] + a[1]
+            if self._out_of_grid(new_x):
                 avail_a[i] = 1
         return avail_a
 
@@ -179,41 +174,42 @@ class RabbitHunter(object):
         if len(state) == 0:
             return True
         if self.end_when_capture is not None:
-            num_rabbits_remaining = self._get_num_rabbits_from_state_size(len(state))
+            num_rabbits_remaining = self.get_num_rabbits_from_state_size(len(state))
             if (self.num_rabbits - num_rabbits_remaining) >= self.end_when_capture:
                 return True
         return False
 
-    def _get_num_hunters_from_state_size(self, state_size):
+    def get_num_hunters_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
 
-    def _get_num_rabbits_from_state_size(self, state_size):
+    def get_num_rabbits_from_state_size(self, state_size):
         return int(state_size / self.agent_rep_size / 2)
 
     def _get_hunters_state_from_state(self, state):
-        return state[:self._get_num_hunters_from_state_size(len(state)) * self.agent_rep_size]
+        return state[:self.get_num_hunters_from_state_size(len(state)) * self.agent_rep_size]
 
     def _get_rabbits_state_from_state(self, state):
-        return state[self._get_num_hunters_from_state_size(len(state)) * self.agent_rep_size:]
+        return state[self.get_num_hunters_from_state_size(len(state)) * self.agent_rep_size:]
 
     def _get_hunters_from_state(self, state):
         hunters_state = self._get_hunters_state_from_state(state)
-        return np.split(hunters_state, self._get_num_hunters_from_state_size(len(state)))
+        return [hunters_state[i:i + self.agent_rep_size] for i in range(0, len(hunters_state), self.agent_rep_size)]
 
     def _get_rabbits_from_state(self, state):
         rabbits_state = self._get_rabbits_state_from_state(state)
-        return np.split(rabbits_state, self._get_num_rabbits_from_state_size(len(state)))
+        return [rabbits_state[i:i + self.agent_rep_size] for i in range(0, len(rabbits_state), self.agent_rep_size)]
 
     def _get_poses_from_one_d_array(self, array):
         positions = []
         for idx in range(0, len(array), 3):
             # +1 to skip the status number
-            positions.append(array[idx+1: idx+3].tolist())
+            positions.append(array[idx+1: idx+3])
         return positions
 
     def render(self, state, outfile=sys.stdout):
-        hunter_poses = self._get_poses_from_one_d_array(state[:self.num_active_hunters * self.agent_rep_size])
-        rabbit_poses = self._get_poses_from_one_d_array(state[self.num_active_hunters * self.agent_rep_size:])
+        num_hunter = self.get_num_hunters_from_state_size(len(state))
+        hunter_poses = self._get_poses_from_one_d_array(state[:num_hunter * self.agent_rep_size])
+        rabbit_poses = self._get_poses_from_one_d_array(state[num_hunter * self.agent_rep_size:])
 
         outfile.write(f'Rendering state: {state}\n')
 
@@ -240,11 +236,6 @@ class RabbitHunter(object):
 
         outfile.write('\n')
 
-
-def action_indices_to_coordinates(a_indices):
-    """Converts a list of action indices to action coordinates."""
-    coords = [RabbitHunter.action_space[i] for i in a_indices]
-    return np.concatenate(coords)
 
 def array_equal(a, b):
     """Because np.array_equal() is too slow. Three-element arrays only."""
