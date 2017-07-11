@@ -153,7 +153,7 @@ def run_policy_net(policy_net, state):
         o_n, h_n, c_n = policy_net(x_n, h_n, c_n)
 
         # Select action over possible ones
-        action_mask = np.expand_dims(game.filter_actions(state, n), axis=0)
+        action_mask = np.expand_dims(game.filter_invalid_acts(state, n), axis=0)
         dist = masked_softmax(o_n, action_mask)
         a_index = torch.multinomial(dist.data,1)[0,0]
 
@@ -204,7 +204,7 @@ def train_Q(policy_net, log_partition_net, target_net, target_log_partition_net,
     action_mask_batch = np.zeros((game.num_agents, len(episode), a_size), dtype=int)
     for i in range(game.num_agents):
         for j, step in enumerate(episode):
-            action_mask_batch[i,j] = game.filter_actions(step.s, i)
+            action_mask_batch[i,j] = game.filter_invalid_acts(step.s, i)
 
     # Do a forward pass, and fill sum_log_probs with sum(log(p)) for each time-step
     sum_log_probs = Variable(ZeroTensor(len(episode)))
