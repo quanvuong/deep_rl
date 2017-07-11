@@ -25,7 +25,7 @@ class HunterTest(unittest.TestCase):
 
             for hunter in hunters:
                 for rabbit in rabbits:
-                    self.assertFalse((hunter == rabbit).all())
+                    self.assertFalse(hunter == rabbit)
 
 if __name__ == '__main__':
     unittest.main()
