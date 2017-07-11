@@ -68,10 +68,12 @@ class RabbitHunter(object):
         np.array([1, -1]), np.array([1, 0]), np.array([1, 1])
     ]
 
+    agent_rep_size = 3
+
     def __init__(self, options):
         self.initial_options = options
         self.set_options(options)
-        self.agent_rep_size = 3
+        RabbitHunter.agent_rep_size = 3
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
@@ -95,7 +97,7 @@ class RabbitHunter(object):
 
     def get_min_state_size(self):
         # 2 because there must be at least one hunter and one rabbit
-        return self.agent_rep_size * 2
+        return RabbitHunter.agent_rep_size * 2
 
     def start_state(self):
         """Returns a random initial state. The state vector is a flat array of:
@@ -183,27 +185,34 @@ class RabbitHunter(object):
                 return True
         return False
 
-    def _get_num_hunters_from_state_size(self, state_size):
-        return int(state_size / self.agent_rep_size / 2)
+    @staticmethod
+    def _get_num_hunters_from_state_size(state_size):
+        return int(state_size / RabbitHunter.agent_rep_size / 2)
 
-    def _get_num_rabbits_from_state_size(self, state_size):
-        return int(state_size / self.agent_rep_size / 2)
+    @staticmethod
+    def _get_num_rabbits_from_state_size(state_size):
+        return int(state_size / RabbitHunter.agent_rep_size / 2)
 
-    def _get_hunters_state_from_state(self, state):
-        return state[:self._get_num_hunters_from_state_size(len(state)) * self.agent_rep_size]
+    @staticmethod
+    def _get_hunters_state_from_state(state):
+        return state[:RabbitHunter._get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size]
 
-    def _get_rabbits_state_from_state(self, state):
-        return state[self._get_num_hunters_from_state_size(len(state)) * self.agent_rep_size:]
+    @staticmethod
+    def _get_rabbits_state_from_state(state):
+        return state[RabbitHunter._get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size:]
 
-    def _get_hunters_from_state(self, state):
-        hunters_state = self._get_hunters_state_from_state(state)
-        return np.split(hunters_state, self._get_num_hunters_from_state_size(len(state)))
+    @staticmethod
+    def _get_hunters_from_state(state):
+        hunters_state = RabbitHunter._get_hunters_state_from_state(state)
+        return np.split(hunters_state, RabbitHunter._get_num_hunters_from_state_size(len(state)))
 
-    def _get_rabbits_from_state(self, state):
-        rabbits_state = self._get_rabbits_state_from_state(state)
-        return np.split(rabbits_state, self._get_num_rabbits_from_state_size(len(state)))
+    @staticmethod
+    def _get_rabbits_from_state(state):
+        rabbits_state = RabbitHunter._get_rabbits_state_from_state(state)
+        return np.split(rabbits_state, RabbitHunter._get_num_rabbits_from_state_size(len(state)))
 
-    def _get_poses_from_one_d_array(self, array):
+    @staticmethod
+    def _get_poses_from_one_d_array(array):
         positions = []
         for idx in range(0, len(array), 3):
             # +1 to skip the status number
@@ -211,8 +220,11 @@ class RabbitHunter(object):
         return positions
 
     def render(self, state, outfile=sys.stdout):
-        hunter_poses = self._get_poses_from_one_d_array(state[:self.num_active_hunters * self.agent_rep_size])
-        rabbit_poses = self._get_poses_from_one_d_array(state[self.num_active_hunters * self.agent_rep_size:])
+        hunter_poses = RabbitHunter._get_poses_from_one_d_array(
+            state[:self.num_active_hunters * RabbitHunter.agent_rep_size])
+
+        rabbit_poses = RabbitHunter._get_poses_from_one_d_array(
+            state[self.num_active_hunters * RabbitHunter.agent_rep_size:])
 
         outfile.write(f'Rendering state: {state}')
 
@@ -244,6 +256,7 @@ def action_indices_to_coordinates(a_indices):
     """Converts a list of action indices to action coordinates."""
     coords = [RabbitHunter.action_space[i] for i in a_indices]
     return np.concatenate(coords)
+
 
 def array_equal(a, b):
     """Because np.array_equal() is too slow. Three-element arrays only."""
