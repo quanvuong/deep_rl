@@ -181,7 +181,7 @@ class RabbitHunter(object):
         return False
 
     @staticmethod
-    def _get_num_hunters_from_state_size(state_size):
+    def get_num_hunters_from_state_size(state_size):
         return int(state_size / RabbitHunter.agent_rep_size / 2)
 
     @staticmethod
@@ -190,21 +190,23 @@ class RabbitHunter(object):
 
     @staticmethod
     def _get_hunters_state_from_state(state):
-        return state[:RabbitHunter._get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size]
+        return state[:RabbitHunter.get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size]
 
     @staticmethod
     def _get_rabbits_state_from_state(state):
-        return state[RabbitHunter._get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size:]
+        return state[RabbitHunter.get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size:]
 
     @staticmethod
-    def _get_hunters_from_state(state):
+    def get_hunters_from_state(state):
         hunters_state = RabbitHunter._get_hunters_state_from_state(state)
-        return np.split(hunters_state, RabbitHunter._get_num_hunters_from_state_size(len(state)))
+        return [hunters_state[i:i + RabbitHunter.agent_rep_size]
+                for i in range(0, len(hunters_state), RabbitHunter.agent_rep_size)]
 
     @staticmethod
-    def _get_rabbits_from_state(state):
+    def get_rabbits_from_state(state):
         rabbits_state = RabbitHunter._get_rabbits_state_from_state(state)
-        return np.split(rabbits_state, RabbitHunter._get_num_rabbits_from_state_size(len(state)))
+        return [rabbits_state[i:i + RabbitHunter.agent_rep_size]
+                for i in range(0, len(rabbits_state), RabbitHunter.agent_rep_size)]
 
     @staticmethod
     def _get_poses_from_one_d_array(array):
@@ -215,11 +217,13 @@ class RabbitHunter(object):
         return positions
 
     def render(self, state, outfile=sys.stdout):
+        num_hunter = self.get_num_hunters_from_state_size(len(state))
+
         hunter_poses = RabbitHunter._get_poses_from_one_d_array(
-            state[:self.num_active_hunters * RabbitHunter.agent_rep_size])
+            state[:num_hunter * RabbitHunter.agent_rep_size])
 
         rabbit_poses = RabbitHunter._get_poses_from_one_d_array(
-            state[self.num_active_hunters * RabbitHunter.agent_rep_size:])
+            state[num_hunter * RabbitHunter.agent_rep_size:])
 
         outfile.write(f'Rendering state: {state}\n')
 
