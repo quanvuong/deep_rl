@@ -73,7 +73,10 @@ class RabbitHunter(object):
     def __init__(self, options, random_seed=None):
         self.initial_options = options
         self.set_options(options)
-        self.random_seed = random_seed
+
+        if random_seed is not None:
+            random.seed(random_seed)
+
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
@@ -100,9 +103,6 @@ class RabbitHunter(object):
     def start_state(self):
         """Returns a random initial state. The state vector is a flat array of:
            concat(hunter positions, rabbit positions). Do not allow for overlapping hunters and rabbits."""
-
-        if self.random_seed is not None:
-            random.seed(self.random_seed)
 
         # 1 for active status
         possible_poses = [(1, i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
