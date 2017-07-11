@@ -40,7 +40,7 @@ class RabbitHunter(object):
         set_options(options): set options for environment. options should be a GameOptions object.
         start_state(): retrieve a starting state
         perform_action(state, act_indices): perform an action given a state. Return next state and reward. 
-        filter_actions(state, agent_number): determine the possible actions for an agent given a state. 
+        filter_invalid_acts(state, agent_number): determine the invalid actions for an agent given a state. 
         is_end(state): given a state, determine if the game should end.
         render(state): given a state, render the state as a grid (useful for debugging purpose).
         
