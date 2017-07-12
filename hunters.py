@@ -73,10 +73,6 @@ class RabbitHunter(object):
     def __init__(self, options, random_seed=None):
         self.initial_options = options
         self.set_options(options)
-
-        if random_seed is not None:
-            random.seed(random_seed)
-
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
