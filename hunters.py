@@ -2,7 +2,27 @@ import numpy as np
 import sys
 import random
 import os
-from itertools import chain
+from itertools import chain, product
+
+
+class NestedDict(dict):
+
+    def get_with_int(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
+
+    def __getitem__(self, item):
+        if type(item) == int:
+            return self.get_with_int(item)
+        elif type(item) == list and len(item) == 1:
+            return self.get_with_int(item[0])
+        elif type(item) == list and len(item) == 2:
+            tmp = self.get_with_int(item[0])
+            return tmp.get_with_int(item[1])
+
 
 class GameOptions(object):
 
@@ -76,6 +96,39 @@ class RabbitHunter(object):
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
+    @staticmethod
+    def joint_action_to_indices(state, joint_a):
+        """Convert a joint action into action indices. We use the transformation:
+                        action for n'th hunter = (J//A^n) % A
+           where J is the joint action number
+                 A is the number of actions for each agent
+                 n is the hunter number (starting from 0)
+           Intuitively, the
+             0th hunter will cycle through actions [0, A) on every +1 joint action number
+             1st hunter will cycle through actions [0, A) on every +A joint action number
+             2nd hunter will cycle through actions [0, A) on every +A^2 joint action number
+             nth hunter will cycle through actions [0, A) on every +A^n joint action number
+           (This is also base A, in reverse digit order.)
+        """
+        num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(state))
+        action_space_size = len(RabbitHunter.action_space)
+
+        a_indices = [None] * num_hunters
+        for hunter in range(num_hunters):
+            a_indices[hunter] = (joint_a // action_space_size ** hunter) % action_space_size
+        return a_indices
+
+    @staticmethod
+    def _select_idx(actions, agent, state):
+        """Returns all indexes that involve a specific action for one agent."""
+        num_hunter = RabbitHunter.get_num_hunters_from_state_size(len(state))
+        action_space_size = len(RabbitHunter.action_space)
+        idx = [0] * action_space_size**num_hunter
+        for act in actions:
+            for s in range(act*(9**agent), 9**num_hunter, 9**(agent+1)):  # Magic
+                idx[s:s+9**agent] = [1 for _ in range(9**agent)]
+        return [i for i in range(len(idx)) if idx[i] == 1]
+
     def reset(self):
         self.set_options(self.initial_options)
 
@@ -111,7 +164,16 @@ class RabbitHunter(object):
 
         return list(chain.from_iterable(hunter_poses + rabbit_poses))
 
-    def perform_action(self, state, num_hunters,  a_indices):
+    def perform_joint_action(self, state, joint_act_idx):
+
+        num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(state))
+
+        # Convert joint act idx to act idxes
+        act_idxes = RabbitHunter.joint_action_to_indices(state, joint_act_idx)
+
+        return self.perform_action(state, num_hunters, act_idxes)
+
+    def perform_action(self, state, num_hunters, a_indices):
         """Performs an action given by a_indices in state s. Returns:
            (s_next, reward)"""
         a = [RabbitHunter.action_space[i] for i in a_indices]
@@ -168,6 +230,23 @@ class RabbitHunter(object):
             new_x = hunter_pos[1] + a[1]
             if self._out_of_grid(new_x):
                 avail_a[i] = 1
+        return avail_a
+
+    def filter_invalid_joint_acts(self, state):
+        action_space_size = len(RabbitHunter.action_space)
+        avail_a = [0] * (action_space_size ** self.num_hunters)
+
+        # Determine the number of hunters
+        num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(state))
+
+        # Start invalidating acts for each hunter:
+        for hunter_idx in range(num_hunters):
+            act_mask = self.filter_invalid_acts(state, hunter_idx)
+            invalid_acts = [idx for idx in range(action_space_size) if act_mask[idx] == 1]
+            idx_in_joint_act = RabbitHunter._select_idx(invalid_acts, hunter_idx, state)
+            for idx in idx_in_joint_act:
+                avail_a[idx] = 1
+
         return avail_a
 
     def is_end(self, state):
