@@ -4,6 +4,7 @@ import random
 import os
 from itertools import chain
 
+
 class GameOptions(object):
 
     def __init__(self, num_hunters=None, num_rabbits=None, grid_size=None, timestep_reward=None, capture_reward=None,
@@ -109,11 +110,19 @@ class RabbitHunter(object):
 
         hunter_poses = random.choices(possible_poses, k=self.num_hunters)
 
-        return list(chain.from_iterable(hunter_poses + rabbit_poses))
+        state_as_one_d = list(chain.from_iterable(hunter_poses + rabbit_poses))
+        # print('state_as_one_d', state_as_one_d)
+        # return RabbitHunter._one_d_to_two_d(state_as_one_d, self)
+        return state_as_one_d
 
     def perform_action(self, state, num_hunters,  a_indices):
         """Performs an action given by a_indices in state s. Returns:
            (s_next, reward)"""
+        # state = [[0, 0, 0, 0], [0, 0, 0, 0], [-1, 0, 0, 0], [1, 0, 0, 0]]
+        # print('state', state)
+        # state = RabbitHunter._two_d_to_one_d(state, self)
+        # print('state', state)
+
         a = [RabbitHunter.action_space[i] for i in a_indices]
         reward = self.timestep_reward
 
@@ -141,7 +150,10 @@ class RabbitHunter(object):
         hunters = [[1] + pos for pos in hunter_poses]
         rabbits = [[1] + pos for pos in active_rabbit_poses]
 
-        return list(chain.from_iterable(hunters + rabbits)), reward
+        one_d = list(chain.from_iterable(hunters + rabbits))
+
+        # return RabbitHunter._one_d_to_two_d(one_d, self), reward
+        return one_d, reward
 
     def _out_of_grid(self, value):
         if value < 0 or value >= self.grid_size:
@@ -154,6 +166,9 @@ class RabbitHunter(object):
            
            Hunter should be active.
            E.g. an agent in a corner is not allowed to move into a wall."""
+
+        # state = RabbitHunter._two_d_to_one_d(state, self)
+
         action_size = len(RabbitHunter.action_space)
         avail_a = [0] * action_size
         hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
@@ -172,6 +187,9 @@ class RabbitHunter(object):
 
     def is_end(self, state):
         """Given a state, return if the game should end."""
+
+        # state = RabbitHunter._two_d_to_one_d(state, self)
+
         if len(state) == 0:
             return True
         if self.end_when_capture is not None:
@@ -197,13 +215,19 @@ class RabbitHunter(object):
         return state[RabbitHunter.get_num_hunters_from_state_size(len(state)) * RabbitHunter.agent_rep_size:]
 
     @staticmethod
-    def get_hunters_from_state(state):
+    def get_hunters_from_state(state, game):
+
+        # state = RabbitHunter._two_d_to_one_d(state, game)
+
         hunters_state = RabbitHunter._get_hunters_state_from_state(state)
         return [hunters_state[i:i + RabbitHunter.agent_rep_size]
                 for i in range(0, len(hunters_state), RabbitHunter.agent_rep_size)]
 
     @staticmethod
-    def get_rabbits_from_state(state):
+    def get_rabbits_from_state(state, game):
+
+        # state = RabbitHunter._two_d_to_one_d(state, game)
+
         rabbits_state = RabbitHunter._get_rabbits_state_from_state(state)
         return [rabbits_state[i:i + RabbitHunter.agent_rep_size]
                 for i in range(0, len(rabbits_state), RabbitHunter.agent_rep_size)]
@@ -216,7 +240,10 @@ class RabbitHunter(object):
             positions.append(array[idx+1: idx+3])
         return positions
 
-    def render(self, state, outfile=sys.stdout):
+    def render(self, state, game, outfile=sys.stdout):
+
+        # state = RabbitHunter._two_d_to_one_d(state, self)
+
         num_hunter = self.get_num_hunters_from_state_size(len(state))
 
         hunter_poses = RabbitHunter._get_poses_from_one_d_array(
@@ -249,6 +276,69 @@ class RabbitHunter(object):
             outfile.write(draw)
 
         outfile.write('\n')
+
+    @staticmethod
+    def _one_d_to_two_d(one_d, game, should_assert=False):
+        # print('one_d', one_d)
+        two_d = [[0 for _ in range(game.grid_size)] for _ in range(game.grid_size)]
+        # print('two_d', two_d)
+        # num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(one_d))
+        num_hunters = 1
+
+        for nh in range(num_hunters):
+            hunter_idx = nh * 3
+            h_y = one_d[hunter_idx + 1]
+            h_x = one_d[hunter_idx + 2]
+            two_d[h_y][h_x] = 1
+
+        # Assume num hunters = num rabbits
+        rabbit_start_at = int(len(one_d) / 2)
+
+        for nr in range(num_hunters):
+            rabbit_idx = rabbit_start_at + nr * 3
+            r_y = one_d[rabbit_idx + 1]
+            r_x = one_d[rabbit_idx + 2]
+            two_d[r_y][r_x] = -1
+
+        # if should_assert:
+        #     assert RabbitHunter._two_d_to_one_d(two_d, game, should_assert=True) == one_d
+
+        return two_d
+
+    @staticmethod
+    def _two_d_to_one_d(two_d, game, should_assert=False):
+        # TODO: decide on how to keep the order of the hunter
+        # TODO: make this function works for more than one hunter - rabbit pair
+
+        one_d = []
+
+        h_found = False
+        r_found = False
+
+        for row_idx, row in enumerate(two_d):
+            if h_found and r_found:
+                break
+
+            if not h_found:
+                try:
+                    h_x = row.index(1)
+                    one_d = [1, row_idx, h_x] + one_d
+                    h_found = True
+                except ValueError:
+                    pass
+
+            if not r_found:
+                try:
+                    r_x = row.index(-1)
+                    one_d += [1, row_idx, r_x]
+                    r_found = True
+                except ValueError:
+                    pass
+
+        # if should_assert:
+        #     assert RabbitHunter._one_d_to_two_d(one_d, game, should_assert=True) == two_d
+
+        return one_d
 
 
 def array_equal(a, b):
