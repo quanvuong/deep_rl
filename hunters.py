@@ -283,9 +283,8 @@ class RabbitHunter(object):
         two_d = [[0 for _ in range(game.grid_size)] for _ in range(game.grid_size)]
         # print('two_d', two_d)
         # num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(one_d))
-        num_hunters = 1
 
-        for nh in range(num_hunters):
+        for nh in range(game.num_hunters):
             hunter_idx = nh * 3
             h_y = one_d[hunter_idx + 1]
             h_x = one_d[hunter_idx + 2]
@@ -294,7 +293,7 @@ class RabbitHunter(object):
         # Assume num hunters = num rabbits
         rabbit_start_at = int(len(one_d) / 2)
 
-        for nr in range(num_hunters):
+        for nr in range(game.num_hunters):
             rabbit_idx = rabbit_start_at + nr * 3
             r_y = one_d[rabbit_idx + 1]
             r_x = one_d[rabbit_idx + 2]
