@@ -284,11 +284,17 @@ class RabbitHunter(object):
         # print('two_d', two_d)
         # num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(one_d))
 
+        first_hunter_set = False
+
         for nh in range(game.num_hunters):
             hunter_idx = nh * 3
             h_y = one_d[hunter_idx + 1]
             h_x = one_d[hunter_idx + 2]
-            two_d[h_y][h_x] = 1
+            if not first_hunter_set:
+                two_d[h_y][h_x] = 100
+                first_hunter_set = True
+            else:
+                two_d[h_y][h_x] = 1
 
         # Assume num hunters = num rabbits
         rabbit_start_at = int(len(one_d) / 2)
