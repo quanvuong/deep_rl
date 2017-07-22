@@ -70,7 +70,7 @@ class RabbitHunter(object):
 
     agent_rep_size = 3
 
-    def __init__(self, options, random_seed=None):
+    def __init__(self, options):
         self.initial_options = options
         self.set_options(options)
         print(f'pid: {os.getpid()}, {options.__dict__}')
