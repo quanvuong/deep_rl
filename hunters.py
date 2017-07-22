@@ -68,7 +68,7 @@ class RabbitHunter(object):
         [1, -1], [1, 0], [1, 1]
     ]
 
-    agent_rep_size = 3
+    agent_rep_size = 2
 
     def __init__(self, options):
         self.initial_options = options
@@ -101,7 +101,7 @@ class RabbitHunter(object):
            concat(hunter positions, rabbit positions). Do not allow for overlapping hunters and rabbits."""
 
         # 1 for active status
-        possible_poses = [(1, i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
+        possible_poses = [(i, j) for i in range(self.grid_size) for j in range(self.grid_size)]
 
         rabbit_poses = random.choices(possible_poses, k=self.num_rabbits)
 
@@ -118,30 +118,26 @@ class RabbitHunter(object):
         reward = self.timestep_reward
 
         # Get positions after hunter and rabbit actions
-        # np.zeros(num_hunters * 3, dtype=np.int)
         hunter_poses = []
         for hunter in range(0, num_hunters):
-            hunter_idx = hunter * 3
+            hunter_idx = hunter * RabbitHunter.agent_rep_size
             hunter_act = a[hunter]
-            hunter_poses.append([state[hunter_idx + 1] + hunter_act[0], state[hunter_idx + 2] + hunter_act[1]])
+            hunter_poses.append([state[hunter_idx] + hunter_act[0], state[hunter_idx + 1] + hunter_act[1]])
 
         # Must be int here to be valid list index
         rabbit_start_at = int(len(state) / 2)
         active_rabbit_poses = []
         # Assume num_hunters = num_rabbits
         for rabbit in range(0, num_hunters):
-            rabbit_idx = rabbit_start_at + rabbit * 3
-            r_pos = [state[rabbit_idx + 1], state[rabbit_idx + 2]]
+            rabbit_idx = rabbit_start_at + rabbit * RabbitHunter.agent_rep_size
+            r_pos = [state[rabbit_idx], state[rabbit_idx + 1]]
             try:
                 hunter_poses.remove(r_pos)
                 reward += self.capture_reward
             except ValueError:
                 active_rabbit_poses.append(r_pos)
 
-        hunters = [[1] + pos for pos in hunter_poses]
-        rabbits = [[1] + pos for pos in active_rabbit_poses]
-
-        return list(chain.from_iterable(hunters + rabbits)), reward
+        return list(chain.from_iterable(hunter_poses + active_rabbit_poses)), reward
 
     def _out_of_grid(self, value):
         if value < 0 or value >= self.grid_size:
@@ -156,7 +152,7 @@ class RabbitHunter(object):
            E.g. an agent in a corner is not allowed to move into a wall."""
         action_size = len(RabbitHunter.action_space)
         avail_a = [0] * action_size
-        hunter_pos = state[3 * agent_no + 1:3 * agent_no + 3]
+        hunter_pos = state[RabbitHunter.agent_rep_size * agent_no:RabbitHunter.agent_rep_size * agent_no + 2]
 
         for i in range(action_size):
             # Check if action moves us off the grid
@@ -211,9 +207,9 @@ class RabbitHunter(object):
     @staticmethod
     def _get_poses_from_one_d_array(array):
         positions = []
-        for idx in range(0, len(array), 3):
+        for idx in range(0, len(array), RabbitHunter.agent_rep_size):
             # +1 to skip the status number
-            positions.append(array[idx+1: idx+3])
+            positions.append(array[idx: idx+RabbitHunter.agent_rep_size])
         return positions
 
     def render(self, state, outfile=sys.stdout):
