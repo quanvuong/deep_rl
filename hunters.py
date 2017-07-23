@@ -4,17 +4,28 @@ import random
 import os
 from itertools import chain
 
+
+def deepcopy_2d_list(original):
+    new = []
+
+    for row in original:
+        new.append([])
+        new[-1] = [num for num in row]
+
+    return new
+
+
 class GameOptions(object):
 
     def __init__(self, num_hunters=None, num_rabbits=None, grid_size=None, timestep_reward=None, capture_reward=None,
-                 end_when_capture=None):
+                 end_when_capture_num_rabbits=None):
 
         self.num_hunters = num_hunters
         self.num_rabbits = num_rabbits
         self.grid_size = grid_size
         self.timestep_reward = timestep_reward
         self.capture_reward = capture_reward
-        self.end_when_capture = end_when_capture
+        self.end_when_capture_num_rabbits = end_when_capture_num_rabbits
 
 
 class RabbitHunter(object):
@@ -73,6 +84,7 @@ class RabbitHunter(object):
     def __init__(self, options):
         self.initial_options = options
         self.set_options(options)
+        self.possible_poses_no_status = [[i, j] for i in range(self.grid_size) for j in range(self.grid_size)]
         print(f'pid: {os.getpid()}, {options.__dict__}')
         sys.stdout.flush()
 
@@ -90,7 +102,7 @@ class RabbitHunter(object):
         self.timestep_reward = options.timestep_reward
         self.capture_reward = options.capture_reward
 
-        self.end_when_capture = options.end_when_capture
+        self.end_when_capture_num_rabbits = options.end_when_capture_num_rabbits
 
     def get_min_state_size(self):
         # 2 because there must be at least one hunter and one rabbit
@@ -117,31 +129,66 @@ class RabbitHunter(object):
         a = [RabbitHunter.action_space[i] for i in a_indices]
         reward = self.timestep_reward
 
-        # Get positions after hunter and rabbit actions
-        # np.zeros(num_hunters * 3, dtype=np.int)
+        num_rabbits_captured_ts = 0
+
+        # Get positions after hunter actions
         hunter_poses = []
         for hunter in range(0, num_hunters):
             hunter_idx = hunter * 3
             hunter_act = a[hunter]
             hunter_poses.append([state[hunter_idx + 1] + hunter_act[0], state[hunter_idx + 2] + hunter_act[1]])
 
+        active_hunter_poses = deepcopy_2d_list(hunter_poses)
+        # Keep track of hunters and their index to replace inactive hunters later
+        # Each item is [idx in original hunter_poses, [y, x]]
+        replacing_hunters = []
+
         # Must be int here to be valid list index
         rabbit_start_at = int(len(state) / 2)
-        active_rabbit_poses = []
-        # Assume num_hunters = num_rabbits
+        rabbit_poses = []
         for rabbit in range(0, num_hunters):
             rabbit_idx = rabbit_start_at + rabbit * 3
-            r_pos = [state[rabbit_idx + 1], state[rabbit_idx + 2]]
+            rabbit_poses.append([state[rabbit_idx + 1], state[rabbit_idx + 2]])
+
+        rabbit_poses_remaining = deepcopy_2d_list(rabbit_poses)
+
+        active_rabbit_poses = []
+        for r_pos in rabbit_poses:
             try:
-                hunter_poses.remove(r_pos)
+                remove_hunter_pos_idx = hunter_poses.index(r_pos)
+                del hunter_poses[remove_hunter_pos_idx]
+
+                assert r_pos in rabbit_poses_remaining
+                rabbit_poses_remaining.remove(r_pos)
                 reward += self.capture_reward
+                num_rabbits_captured_ts += 1
+
+                # generate new hunters and rabbits and append them to respective lists
+                new_hunter = self._generate_agent_pos(rabbit_poses_remaining)
+                replacing_hunters.append([remove_hunter_pos_idx, new_hunter])
+
+                new_rabbit = self._generate_agent_pos(hunter_poses)
+                active_rabbit_poses.append(new_rabbit)
             except ValueError:
                 active_rabbit_poses.append(r_pos)
 
-        hunters = [[1] + pos for pos in hunter_poses]
+        # Replace inactive hunters with new hunters
+        for new_hunters in replacing_hunters:
+            idx = new_hunters[0]
+            pos = new_hunters[1]
+
+            active_hunter_poses[idx] = pos
+
+        hunters = [[1] + pos for pos in active_hunter_poses]
         rabbits = [[1] + pos for pos in active_rabbit_poses]
 
-        return list(chain.from_iterable(hunters + rabbits)), reward
+        return list(chain.from_iterable(hunters + rabbits)), reward, num_rabbits_captured_ts
+
+    def _generate_agent_pos(self, can_not_overlap_these):
+
+        possible_poses = [pos for pos in self.possible_poses_no_status if pos not in can_not_overlap_these]
+
+        return random.choice(possible_poses)
 
     def _out_of_grid(self, value):
         if value < 0 or value >= self.grid_size:
@@ -170,14 +217,10 @@ class RabbitHunter(object):
                 avail_a[i] = 1
         return avail_a
 
-    def is_end(self, state):
+    def is_end(self, num_rabbits_captured):
         """Given a state, return if the game should end."""
-        if len(state) == 0:
+        if num_rabbits_captured == self.end_when_capture_num_rabbits:
             return True
-        if self.end_when_capture is not None:
-            num_rabbits_remaining = RabbitHunter._get_num_rabbits_from_state_size(len(state))
-            if (self.num_rabbits - num_rabbits_remaining) >= self.end_when_capture:
-                return True
         return False
 
     @staticmethod
