@@ -219,7 +219,7 @@ class RabbitHunter(object):
 
     def is_end(self, num_rabbits_captured):
         """Given a state, return if the game should end."""
-        if num_rabbits_captured == self.end_when_capture_num_rabbits:
+        if num_rabbits_captured >= self.end_when_capture_num_rabbits:
             return True
         return False
 
