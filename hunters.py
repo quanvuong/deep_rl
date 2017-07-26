@@ -73,8 +73,6 @@ class RabbitHunter(object):
     def __init__(self, options):
         self.initial_options = options
         self.set_options(options)
-        print(f'pid: {os.getpid()}, {options.__dict__}')
-        sys.stdout.flush()
 
     def reset(self):
         self.set_options(self.initial_options)
