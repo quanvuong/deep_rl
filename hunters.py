@@ -232,7 +232,6 @@ class RabbitHunter(object):
 
     def filter_invalid_joint_acts(self, state):
         action_space_size = len(RabbitHunter.action_space)
-
         num_hunters = RabbitHunter.get_num_hunters_from_state_size(len(state))
         avail_a = [0] * (action_space_size ** num_hunters)
 
