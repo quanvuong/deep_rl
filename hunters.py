@@ -85,8 +85,6 @@ class RabbitHunter(object):
         self.initial_options = options
         self.set_options(options)
         self.possible_poses_no_status = [[i, j] for i in range(self.grid_size) for j in range(self.grid_size)]
-        print(f'pid: {os.getpid()}, {options.__dict__}')
-        sys.stdout.flush()
 
     def reset(self):
         self.set_options(self.initial_options)
