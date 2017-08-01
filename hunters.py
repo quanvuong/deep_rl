@@ -17,6 +17,23 @@ class GameOptions(object):
         self.end_when_capture = end_when_capture
 
 
+def three_values_to_1_d_state(state, args):
+
+    empty_grid = [[0 for _ in range(args.grid_size)] for _ in range(args.grid_size)]
+
+    hunters = RabbitHunter.get_hunters_from_state(state)
+
+    for hunter in hunters:
+        empty_grid[hunter[1]][hunter[2]] = 1
+
+    rabbits = RabbitHunter.get_rabbits_from_state(state)
+
+    for rabbit in rabbits:
+        empty_grid[rabbit[1]][rabbit[2]] = -1
+
+    return list(chain.from_iterable(empty_grid))
+
+
 class RabbitHunter(object):
     """
         This is a multi-agent learning task, where hunters (agents) are trying to
@@ -107,7 +124,9 @@ class RabbitHunter(object):
 
         hunter_poses = random.choices(possible_poses, k=self.num_hunters)
 
-        return list(chain.from_iterable(hunter_poses + rabbit_poses))
+        three_values_state = list(chain.from_iterable(hunter_poses + rabbit_poses))
+
+        return three_values_to_1_d_state(three_values_state, self)
 
     def perform_action(self, state, num_hunters,  a_indices):
         """Performs an action given by a_indices in state s. Returns:
