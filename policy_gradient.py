@@ -374,6 +374,7 @@ if __name__ == '__main__':
             train_policy_net(policy_net, episode, val_baseline=value_net, td=args.td_update, gamma=args.gamma)
 
             print("{{'i': {}, 'num_episode': {}, 'episode_len': {}, 'episode_return': {}, 'avg_return': {}, 'avg_value_error': {}}},".format(i, num_episode, len(episode), episode[0].G, avg_return, avg_value_error))
+            sys.stdout.flush()
 
         if args.save_policy is not None:
             if args.num_rounds > 1:
