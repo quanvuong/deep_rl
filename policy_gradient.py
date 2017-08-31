@@ -39,11 +39,16 @@ SMALL = 1e-7
 
 def plot_episode_lengths(episode_lengths, args):
 
+    try:
+        slurm_array_idx = int(os.environ['SLURM_ARRAY_TASK_ID'])
+    except KeyError:
+        slurm_array_idx = 1
+
     plt.hist(episode_lengths, range=(0, 50))
     plt.title('Episode Length during validation')
     plt.xlabel('Episode Length')
     plt.ylabel('Frequency')
-    plt.savefig('episode_lengths.png', bbox='tight')
+    plt.savefig(f'episode_lengths_{slurm_array_idx}.png', bbox='tight')
     plt.clf()
 
 
@@ -449,7 +454,7 @@ if __name__ == '__main__':
 
     # Validation
     policy_net = build_policy_net(policy_net_layers)
-    policy_net.load_state_dict(torch.load(args.save_policy))
+    policy_net.load_state_dict(torch.load(args.save_policy + '_' + str(slurm_array_idx)))
     val_start_states = load_validation_game(game)
 
     episode_lengths = []
