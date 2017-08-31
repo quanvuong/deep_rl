@@ -21,7 +21,8 @@ import time
 from namedlist import namedlist
 from torch.autograd import Variable
 
-from wrappers import ByteTensorFromNumpyVar, FloatTensorFromNumpyVar, FloatTensorVar, FloatTensorFromNumpy
+from wrappers import ByteTensorFromNumpyVar, FloatTensorFromNumpyVar, FloatTensorVar, FloatTensorFromNumpy, \
+    FloatTensor, ZeroTensor
 
 # Define a EpisodeStep container for each step in an episode:
 #   s, a is the state-action pair visited during that step
@@ -338,11 +339,6 @@ if __name__ == '__main__':
     # Transparently set number of threads based on environment variables
     num_threads = int(os.getenv('OMP_NUM_THREADS', 1))
     torch.set_num_threads(num_threads)
-
-    # Define wrappers for Tensors
-    FloatTensor = lambda x: torch.cuda.FloatTensor(x) if cuda else torch.FloatTensor(x)
-    ZeroTensor = lambda *s: torch.cuda.FloatTensor(*s).zero_() if cuda else torch.zeros(*s)
-    ByteTensor = lambda x: torch.cuda.ByteTensor(x) if cuda else torch.ByteTensor(x)
 
     if args.game == 'gridworld':
         import gridworld as game
