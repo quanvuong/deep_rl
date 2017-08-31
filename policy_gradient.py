@@ -17,6 +17,7 @@ import random
 import sys
 import torch
 import time
+import math
 
 from namedlist import namedlist
 from torch.autograd import Variable
@@ -359,6 +360,14 @@ if __name__ == '__main__':
                           'timestep_reward': 0, 'capture_reward': 1,
                           'end_when_capture': 3, 'k': k, 'm': m, 'n': 6})
 
+    # Set setting for entropy
+    try:
+        slurm_array_idx = int(os.environ['SLURM_ARRAY_TASK_ID'])
+    except KeyError:
+        slurm_array_idx = 1
+
+    ew_beta = slurm_array_idx / 10
+
     for i in range(args.num_rounds):
         policy_net = build_policy_net(policy_net_layers)
         value_net = build_value_net(value_net_layers)
@@ -371,14 +380,17 @@ if __name__ == '__main__':
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
             avg_return = 0.9 * avg_return + 0.1 * episode[0].G
-            train_policy_net(policy_net, episode, val_baseline=value_net, td=args.td_update, gamma=args.gamma)
 
-            print("{{'i': {}, 'num_episode': {}, 'episode_len': {}, 'episode_return': {}, 'avg_return': {}, 'avg_value_error': {}}},".format(i, num_episode, len(episode), episode[0].G, avg_return, avg_value_error))
+            entropy_weight = ew_beta ** math.log(num_episode + 1)
+            train_policy_net(policy_net, episode, val_baseline=value_net, td=args.td_update,
+                             gamma=args.gamma, entropy_weight=entropy_weight)
+
+            print("{{'i': {}, 'num_episode': {}, 'episode_len': {}, 'episode_return': {}, 'avg_return': {}, 'avg_value_error': {}, 'entropy_weight': {}}},".format(i, num_episode, len(episode), episode[0].G, avg_return, avg_value_error, entropy_weight))
             sys.stdout.flush()
 
         if args.save_policy is not None:
             if args.num_rounds > 1:
-                torch.save(policy_net.state_dict(), args.save_policy + str(i))
+                torch.save(policy_net.state_dict(), args.save_policy + str(i) + str(slurm_array_idx))
             else:
-                torch.save(policy_net.state_dict(), args.save_policy)
+                torch.save(policy_net.state_dict(), args.save_policy + '_' + str(slurm_array_idx))
             print('Policy saved to ' + args.save_policy)
