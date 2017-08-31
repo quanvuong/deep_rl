@@ -14,15 +14,11 @@ IntTensor = lambda x: torch.from_numpy(x).int()
 IntTensorVar = lambda x: Variable(IntTensor(x))
 
 
-def FloatTensorVar(x, args, requires_grad=False):
-    if args.use_cuda:
-        return Variable(FloatTensor(x).cuda(), requires_grad)
-    return Variable(FloatTensor(x), requires_grad)
+def FloatTensorVar(x):
+    return Variable(FloatTensor(x))
 
 
-def FloatTensorFromNumpyVar(x, args):
-    if args.use_cuda:
-        return Variable(FloatTensorFromNumpy(x)).cuda()
+def FloatTensorFromNumpyVar(x):
     return Variable(FloatTensorFromNumpy(x))
 
 

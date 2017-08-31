@@ -21,6 +21,8 @@ import time
 from namedlist import namedlist
 from torch.autograd import Variable
 
+from wrappers import ByteTensorFromNumpyVar, FloatTensorFromNumpyVar, FloatTensorVar, FloatTensorFromNumpy
+
 # Define a EpisodeStep container for each step in an episode:
 #   s, a is the state-action pair visited during that step
 #   r is the reward received from that state-action pair
@@ -118,8 +120,8 @@ def train_value_net(value_net, episode, td=None, gamma=1.0):
                 else:
                     r = sum([gamma**(j-t)*episode[j].r for j in range(t, len(episode))])
                 returns.append(r)
-    states = Variable(FloatTensor(states))
-    returns = Variable(FloatTensor(returns))
+    states = FloatTensorFromNumpyVar(np.array(states))
+    returns = FloatTensorVar(returns)
 
     # Train the value network on states, returns
     optimizer_value_net.zero_grad()
@@ -133,7 +135,7 @@ def train_value_net(value_net, episode, td=None, gamma=1.0):
 def run_value_net(value_net, state):
     '''Wrapper function to feed one state into the given value network and
        return the value as a scalar.'''
-    result = value_net(Variable(FloatTensor([state])))
+    result = value_net(FloatTensorFromNumpyVar(np.array([state])))
     return result.data[0][0]
 
 def build_policy_net(layers):
@@ -173,7 +175,7 @@ def masked_softmax(logits, mask):
     # http://timvieira.github.io/blog/post/2014/02/11/exp-normalize-trick/
 
     # b must be the max over the unmasked logits
-    inv_mask = Variable(ByteTensor(1 - mask))
+    inv_mask = ByteTensorFromNumpyVar(1 - mask)
     inf_logits = logits.masked_fill(inv_mask, float('-inf'))
     b = torch.max(inf_logits, 1)[0].expand_as(inf_logits)
 
@@ -263,7 +265,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
     # Fill input_batch with concat(a_{n-1}, state) for each agent, for each time-step
     for i in range(game.num_agents):
         for j, step in enumerate(episode):
-            input_batch[i, j, a_size:].copy_(FloatTensor(step.s))
+            input_batch[i, j, a_size:].copy_(FloatTensorFromNumpy(step.s))
             if i > 0: input_batch[i, j, step.a[i-1]] = 1
     input_batch = Variable(input_batch)
 
@@ -285,7 +287,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
 
     # Compute returns, either Monte-Carlo or TD(k)
     if td is None: # Monte-Carlo
-        returns = Variable(FloatTensor(np.asarray([step.G for step in episode])))
+        returns = FloatTensorFromNumpyVar(np.asarray([step.G for step in episode]))
     else: # TD(k)
         returns = []
         for t in range(len(episode)):
@@ -314,7 +316,7 @@ def train_policy_net(policy_net, episode, val_baseline, td=None, gamma=1.0, entr
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runs multi-agent policy gradient.')
-    parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], required=True, help='A game to run')
+    parser.add_argument('--game', choices=['gridworld', 'gridworld_3d', 'hunters'], help='A game to run')
     parser.add_argument('--cuda', default=False, action='store_true', help='Include to run on CUDA')
     parser.add_argument('--max_episode_len', default=float('inf'), type=float, help='Terminate episode early at this number of steps')
     parser.add_argument('--max_len_penalty', default=0, type=float, help='If episode is terminated early, add this to the last reward')
@@ -324,6 +326,7 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', default=1, type=float, help='Global discount factor for Monte-Carlo and TD returns')
     parser.add_argument('--save_policy', type=str, help='Save the trained policy under this filename')
     args = parser.parse_args()
+    args.game = 'hunters'
     print(args)
 
     # Sets options for PG
