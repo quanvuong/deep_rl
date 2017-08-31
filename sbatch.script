@@ -2,7 +2,7 @@
 #SBATCH --job-name=hunter_rabbit
 #SBATCH --output=output.slurm
 
-#SBATCH --time=24:00:00
+#SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=10000mb
 #SBATCH --mail-type=START,END,FAIL,REQUEUE,STAGE_OUT
