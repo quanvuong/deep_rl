@@ -34,6 +34,22 @@ from wrappers import ByteTensorFromNumpyVar, FloatTensorFromNumpyVar, FloatTenso
 EpisodeStep = namedlist('EpisodeStep', 's a r G', default=0)
 SMALL = 1e-7
 
+
+def plot_avg_returns(avg_returns, args):
+
+    try:
+        slurm_array_idx = int(os.environ['SLURM_ARRAY_TASK_ID'])
+    except KeyError:
+        slurm_array_idx = 1
+
+    plt.plot(avg_returns)
+    plt.title(f'Moving average returns for {args.num_episodes}')
+    plt.xlabel('Episode')
+    plt.ylabel('Moving average returns')
+    plt.savefig(f'moving_average_returns_{slurm_array_idx}.png', bbox_inches='tight')
+    plt.clf()
+
+
 def run_episode(policy_net, gamma=1.0):
     '''Runs one episode of a game to completion with a policy network,
        which is a LSTM that maps states to action probabilities.
@@ -390,18 +406,6 @@ if __name__ == '__main__':
                 torch.save(policy_net.state_dict(), args.save_policy)
             print('Policy saved to ' + args.save_policy)
 
+        plot_avg_returns(avg_returns, args)
 
-def plot_avg_returns(avg_returns, args):
-
-    try:
-        slurm_array_idx = int(os.environ['SLURM_ARRAY_TASK_ID'])
-    except KeyError:
-        slurm_array_idx = 1
-
-    plt.plot(avg_returns)
-    plt.title(f'Moving average returns for {args.num_episodes}')
-    plt.xlabel('Episode')
-    plt.ylabel('Moving average returns')
-    plt.savefig(f'moving_average_returns_{slurm_array_idx}.png', bbox_inches='tight')
-    plt.clf()
 
