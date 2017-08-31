@@ -17,6 +17,7 @@ import random
 import sys
 import torch
 import time
+import pickle
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -36,6 +37,16 @@ EpisodeStep = namedlist('EpisodeStep', 's a r G', default=0)
 SMALL = 1e-7
 
 
+def plot_episode_lengths(episode_lengths, args):
+
+    plt.hist(episode_lengths, range=(0, 50))
+    plt.title('Episode Length during validation')
+    plt.xlabel('Episode Length')
+    plt.ylabel('Frequency')
+    plt.savefig('episode_lengths.png', bbox='tight')
+    plt.clf()
+
+
 def plot_avg_returns(avg_returns, args):
 
     try:
@@ -51,7 +62,19 @@ def plot_avg_returns(avg_returns, args):
     plt.clf()
 
 
-def run_episode(policy_net, gamma=1.0):
+def get_validation_game(game):
+    start_states = [game.start_state() for _ in range(1000)]
+
+    with open('validation_game.pickled', 'w+b') as f:
+        pickle.dump(start_states, f)
+
+
+def load_validation_game(game):
+    with open('validation_game.pickled', 'rb') as f:
+        return pickle.load(f)
+
+
+def run_episode(policy_net, gamma=1.0, state=None):
     '''Runs one episode of a game to completion with a policy network,
        which is a LSTM that maps states to action probabilities.
 
@@ -63,7 +86,8 @@ def run_episode(policy_net, gamma=1.0):
            [EpisodeStep(t=0), ..., EpisodeStep(t=T)]
     '''
     # Initialize state as player position
-    state = game.start_state()
+    if state is None:
+        state = game.start_state()
     episode = []
 
     # Run game until agent reaches the end
@@ -422,5 +446,20 @@ if __name__ == '__main__':
             print('Policy saved to ' + args.save_policy)
 
         plot_avg_returns(avg_returns, args)
+
+    # Validation
+    policy_net = build_policy_net(policy_net_layers)
+    policy_net.load_state_dict(torch.load(args.save_policy))
+    val_start_states = load_validation_game(game)
+
+    episode_lengths = []
+
+    for idx, state in enumerate(val_start_states):
+        episode = run_episode(policy_net, gamma=args.gamma, state=state)
+        episode_lengths.append(len(episode))
+
+        print(idx)
+
+    plot_episode_lengths(episode_lengths, args)
 
 
