@@ -324,7 +324,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_episodes', default=100000, type=int, help='Number of episodes to run in a round of training')
     parser.add_argument('--num_rounds', default=1, type=int, help='How many rounds of training to run')
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
-    parser.add_argument('--gamma', default=1, type=float, help='Global discount factor for Monte-Carlo and TD returns')
+    parser.add_argument('--gamma', default=0.8, type=float, help='Global discount factor for Monte-Carlo and TD returns')
     parser.add_argument('--save_policy', type=str, help='Save the trained policy under this filename')
     args = parser.parse_args()
     args.game = 'hunters'
