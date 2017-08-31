@@ -17,6 +17,9 @@ import random
 import sys
 import torch
 import time
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import math
 
 from namedlist import namedlist
@@ -374,12 +377,16 @@ if __name__ == '__main__':
         optimizer_value_net = torch.optim.RMSprop(value_net.parameters(), lr=1e-3, eps=1e-5)
         optimizer_policy_net = torch.optim.RMSprop(policy_net.parameters(), lr=1e-3, eps=1e-5)
 
+        avg_returns = []
+
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
             episode = run_episode(policy_net, gamma=args.gamma)
             value_error = train_value_net(value_net, episode, td=args.td_update, gamma=args.gamma)
             avg_value_error = 0.9 * avg_value_error + 0.1 * value_error
             avg_return = 0.9 * avg_return + 0.1 * episode[0].G
+
+            avg_returns.append(avg_return)
 
             entropy_weight = ew_beta ** math.log(num_episode + 1)
             train_policy_net(policy_net, episode, val_baseline=value_net, td=args.td_update,
@@ -397,3 +404,19 @@ if __name__ == '__main__':
             else:
                 torch.save(policy_net.state_dict(), args.save_policy + '_' + str(slurm_array_idx))
             print('Policy saved to ' + args.save_policy)
+
+
+def plot_avg_returns(avg_returns, args):
+
+    try:
+        slurm_array_idx = int(os.environ['SLURM_ARRAY_TASK_ID'])
+    except KeyError:
+        slurm_array_idx = 1
+
+    plt.plot(avg_returns)
+    plt.title(f'Moving average returns for {args.num_episodes}')
+    plt.xlabel('Episode')
+    plt.ylabel('Moving average returns')
+    plt.savefig(f'moving_average_returns_{slurm_array_idx}.png', bbox_inches='tight')
+    plt.clf()
+
