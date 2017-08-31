@@ -408,7 +408,7 @@ if __name__ == '__main__':
         optimizer_value_net = torch.optim.RMSprop(value_net.parameters(), lr=1e-3, eps=1e-5)
         optimizer_policy_net = torch.optim.RMSprop(policy_net.parameters(), lr=1e-3, eps=1e-5)
 
-        avg_returns = []
+        # avg_returns = []
 
         avg_value_error, avg_return = 0.0, 0.0
         for num_episode in range(args.num_episodes):
@@ -418,7 +418,7 @@ if __name__ == '__main__':
             avg_return = 0.9 * avg_return + 0.1 * episode[0].G
             train_policy_net(policy_net, episode, val_baseline=value_net, td=args.td_update, gamma=args.gamma)
 
-            avg_returns.append(avg_return)
+            # avg_returns.append(avg_return)
 
             print("{{'i': {}, 'num_episode': {}, 'episode_len': {}, 'episode_return': {}, 'avg_return': {}, 'avg_value_error': {}}},".format(i, num_episode, len(episode), episode[0].G, avg_return, avg_value_error))
             sys.stdout.flush()
@@ -430,7 +430,7 @@ if __name__ == '__main__':
                 torch.save(policy_net.state_dict(), args.save_policy)
             print('Policy saved to ' + args.save_policy)
 
-        plot_avg_returns(avg_returns, args)
+        # plot_avg_returns(avg_returns, args)
 
     # Validation
     policy_net = build_policy_net(policy_net_layers)
