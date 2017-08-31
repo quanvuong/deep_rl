@@ -14,4 +14,4 @@
 source activate /scratch/qhv200/conda3-envs/pytorch1_cpu_py36
 cd /scratch/qhv200/kenny_drl/with_entropy
 
-OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python policy_gradient.py --save_policy=save
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python policy_gradient.py --save_policy=save --num_episodes=10000
