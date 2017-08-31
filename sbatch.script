@@ -12,4 +12,4 @@
 source activate /scratch/qhv200/conda_envs/pytorch1_cpu_py36
 cd /scratch/qhv200/kenny_drl/master
 
-OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python main.py
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python policy_gradient.py
