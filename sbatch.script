@@ -7,7 +7,6 @@
 #SBATCH --mem=50000mb
 #SBATCH --mail-type=START,END,FAIL,REQUEUE,STAGE_OUT
 #SBATCH --mail-user=qhv200@nyu.edu
-#SBATCH --partition=knl
 
 source activate /scratch/qhv200/conda_envs/pytorch1_cpu_py36
 cd /scratch/qhv200/kenny_drl/master
