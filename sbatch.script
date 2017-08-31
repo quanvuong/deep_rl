@@ -1,6 +1,6 @@
 #!/bin/bash -l
 #SBATCH --job-name=hunter_rabbit
-#SBATCH --output=output.slurm
+#SBATCH --output=%a_output.slurm
 
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=1
