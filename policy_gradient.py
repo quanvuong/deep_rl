@@ -455,7 +455,7 @@ if __name__ == '__main__':
             if args.num_rounds > 1:
                 torch.save(policy_net.state_dict(), args.save_policy + str(i) + str(slurm_array_idx))
             else:
-                torch.save(policy_net.state_dict(), args.save_policy + '_' + str(slurm_array_idx))
+                torch.save(policy_net.state_dict(), args.save_policy + '_' + str(slurm_array_idx) + '.pickled')
             print('Policy saved to ' + args.save_policy)
 
         # plot_avg_returns(avg_returns, args)
@@ -468,7 +468,7 @@ if __name__ == '__main__':
     # Validation
     val_start_states = get_validation_game(game)
     policy_net = build_policy_net(policy_net_layers)
-    policy_net.load_state_dict(torch.load(args.save_policy + '_' + str(slurm_array_idx)))
+    policy_net.load_state_dict(torch.load(args.save_policy + '_' + str(slurm_array_idx) + '.pickled'))
     # val_start_states = load_validation_game(game)
 
     episode_lengths = []
