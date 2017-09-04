@@ -369,9 +369,15 @@ if __name__ == '__main__':
     parser.add_argument('--td_update', type=int, help='k for a TD(k) update term for the policy and value nets; exclude for a Monte-Carlo update')
     parser.add_argument('--gamma', default=0.8, type=float, help='Global discount factor for Monte-Carlo and TD returns')
     parser.add_argument('--save_policy', type=str, help='Save the trained policy under this filename')
+    parser.add_argument('--seed', type=int, default=0)
     args = parser.parse_args()
     args.game = 'hunters'
     print(args)
+
+    # Set seeds
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
 
     # Sets options for PG
     cuda = args.cuda
