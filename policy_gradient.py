@@ -443,8 +443,6 @@ if __name__ == '__main__':
         episode = run_episode(policy_net, gamma=args.gamma, state=state)
         episode_lengths.append(len(episode))
 
-        print(idx)
-
     plot_episode_lengths(episode_lengths, args)
 
 
