@@ -73,6 +73,8 @@ def get_validation_game(game):
     with open('validation_game.pickled', 'w+b') as f:
         pickle.dump(start_states, f)
 
+    return start_states
+
 
 def load_validation_game(game):
     with open('validation_game.pickled', 'rb') as f:
@@ -464,9 +466,10 @@ if __name__ == '__main__':
     random.seed(args.seed)
 
     # Validation
+    val_start_states = get_validation_game(game)
     policy_net = build_policy_net(policy_net_layers)
     policy_net.load_state_dict(torch.load(args.save_policy + '_' + str(slurm_array_idx)))
-    val_start_states = load_validation_game(game)
+    # val_start_states = load_validation_game(game)
 
     episode_lengths = []
 
