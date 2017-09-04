@@ -448,7 +448,7 @@ if __name__ == '__main__':
     # Validation
     val_start_states = get_validation_game(game)
     policy_net = build_policy_net(policy_net_layers)
-    policy_net.load_state_dict(torch.load(args.save_policy))
+    policy_net.load_state_dict(torch.load(args.save_policy + '.pickled'))
     # val_start_states = load_validation_game(game)
 
     episode_lengths = []
