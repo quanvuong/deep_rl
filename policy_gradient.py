@@ -427,7 +427,7 @@ if __name__ == '__main__':
             if args.num_rounds > 1:
                 torch.save(policy_net.state_dict(), args.save_policy + str(i))
             else:
-                torch.save(policy_net.state_dict(), args.save_policy)
+                torch.save(policy_net.state_dict(), args.save_policy + '.pickled')
             print('Policy saved to ' + args.save_policy)
 
         # plot_avg_returns(avg_returns, args)
