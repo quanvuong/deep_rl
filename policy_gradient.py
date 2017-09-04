@@ -406,7 +406,7 @@ if __name__ == '__main__':
         value_net_layers = [3*(k+m), 64, 1]
         game.set_options({'rabbit_action': None, 'remove_hunter': True,
                           'timestep_reward': 0, 'capture_reward': 1,
-                          'end_when_capture': 3, 'k': k, 'm': m, 'n': 6})
+                          'end_when_capture': None, 'k': k, 'm': m, 'n': 6})
 
     # Set setting for entropy
     try:
