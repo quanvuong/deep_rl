@@ -438,6 +438,11 @@ if __name__ == '__main__':
 
         # plot_avg_returns(avg_returns, args)
 
+    # Re-seed before validation
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+
     # Validation
     policy_net = build_policy_net(policy_net_layers)
     policy_net.load_state_dict(torch.load(args.save_policy))
